@@ -23,7 +23,7 @@ export default function Trasa() {
   }, []); // Dodana pusta zależność `[]` do `useEffect`, aby uruchomić tylko raz
 
   return (
-    <div className="flex flex-col items-center justify-center w-screen h-screen bg-lime-300">
+    <div className="flex flex-col items-center justify-center w-full h-screen bg-lime-300">
       <h1 className="text-2xl font-bold mb-4 text-center">Zaczynamy! Powodzenia!</h1>
 
       {location.lat !== null && location.lon !== null ? (

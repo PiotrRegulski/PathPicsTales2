@@ -39,7 +39,7 @@ const MapComponent: React.FC<UserLocation> = () => {
       mapInstance.current = L.map(mapRef.current).setView([51.9194, 19.1451], 13); // Początkowe współrzędne Polski
 
       L.tileLayer("https://{s}.tile.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", {
-        maxZoom: 19,
+        maxZoom: 18,
         attribution: "&copy; OpenStreetMap contributors & CyclOSM",
       }).addTo(mapInstance.current);
     }
@@ -74,15 +74,18 @@ const MapComponent: React.FC<UserLocation> = () => {
     );
 
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+     if (watchIdRef.current !== null) {
+    navigator.geolocation.clearWatch(watchIdRef.current);
+  }
+  if (mapInstance.current) {
+    // Usuwanie tylko warstw zamiast całkowitego usunięcia mapy
+    mapInstance.current.eachLayer((layer) => {
+      if (!(layer instanceof L.TileLayer)) { 
+        mapInstance.current?.removeLayer(layer);
       }
-      if (mapInstance.current) {
-        mapInstance.current.eachLayer((layer) => mapInstance.current?.removeLayer(layer));
-        mapInstance.current.remove();
-        mapInstance.current = null;
-      }
-      markerRef.current = null;
+    });
+  }
+  markerRef.current = null;
     };
   }, []);
 
