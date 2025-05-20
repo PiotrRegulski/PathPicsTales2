@@ -4,7 +4,15 @@ import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// 🔹 **Import Leaflet poprawnie**
+// 🔹 Konfiguracja ikony markera
+const markerIcon = new L.Icon({
+  iconUrl: "/leaflet/marker-icon.png",
+  shadowUrl: "/leaflet/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 type UserLocation = { lat: number; lon: number };
 
@@ -35,10 +43,7 @@ const MapComponent: React.FC<UserLocation> = () => {
     }
 
     if (mapRef.current && !mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView(
-        [51.9194, 19.1451],
-        13
-      ); // Początkowe współrzędne Polski
+      mapInstance.current = L.map(mapRef.current).setView([51.9194, 19.1451], 13); // Polska
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
@@ -56,7 +61,7 @@ const MapComponent: React.FC<UserLocation> = () => {
 
         if (mapInstance.current) {
           if (!markerRef.current) {
-            markerRef.current = L.marker([latitude, longitude])
+            markerRef.current = L.marker([latitude, longitude], { icon: markerIcon }) // ✅ Użycie ręcznej ikony
               .addTo(mapInstance.current)
               .bindPopup("📍 Twoja aktualna lokalizacja")
               .openPopup();
@@ -93,49 +98,33 @@ const MapComponent: React.FC<UserLocation> = () => {
 
   return (
     <div>
-      {gpsPermission === "denied" && (
-        <p>🚫 Dostęp do GPS został **zablokowany** przez użytkownika.</p>
-      )}
-      {gpsPermission === "unsupported" && (
-        <p>❌ **Urządzenie nie obsługuje GPS!**</p>
-      )}
-      {gpsPermission === "prompt" && (
-        <p>⏳ **Czekamy na zgodę użytkownika...**</p>
-      )}
+      {gpsPermission === "denied" && <p>🚫 Dostęp do GPS został **zablokowany** przez użytkownika.</p>}
+      {gpsPermission === "unsupported" && <p>❌ **Urządzenie nie obsługuje GPS!**</p>}
+      {gpsPermission === "prompt" && <p>⏳ **Czekamy na zgodę użytkownika...**</p>}
 
       {userLocation ? (
-        <p>
-          📍 Twoja aktualna lokalizacja: {userLocation.lat}, {userLocation.lon}
-        </p>
+        <p>📍 Twoja aktualna lokalizacja: {userLocation.lat}, {userLocation.lon}</p>
       ) : (
-        gpsPermission === "granted" && (
-          <p>🔄 **Oczekiwanie na sygnał GPS...**</p>
-        )
+        gpsPermission === "granted" && <p>🔄 **Oczekiwanie na sygnał GPS...**</p>
       )}
 
       <p>🚗 Prędkość: {speed.toFixed(2)} m/s</p>
 
-      {/* 🔄 Przycisk do ponownego sprawdzenia GPS */}
       <button
         onClick={() => {
-          navigator.permissions
-            .query({ name: "geolocation" })
-            .then((result) => {
-              setGpsPermission(result.state);
-              if (result.state === "granted") {
-                window.location.reload();
-              }
-            });
+          navigator.permissions.query({ name: "geolocation" }).then((result) => {
+            setGpsPermission(result.state);
+            if (result.state === "granted") {
+              window.location.reload();
+            }
+          });
         }}
         className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition"
       >
         🔄 Sprawdź ponownie dostęp do GPS
       </button>
 
-      <div
-        ref={mapRef}
-        className="container h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg"
-      />
+      <div ref={mapRef} className="container h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg" />
     </div>
   );
 };
