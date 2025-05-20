@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-
+const CameraComponent = dynamic(() => import("@/components/camer/CameraComponent"), { ssr: false });
 const MapComponent = dynamic(() => import("@/components/tracks/MapComponent"), { ssr: false });
 
 export default function Trasa() {
@@ -30,6 +30,7 @@ export default function Trasa() {
         <div className="flex flex-col bg-lime-500  h-[40rem] w-full">
           <p className="text-center text-blue-950">Lokalizacja: {location.lat}, {location.lon}</p> {/* Poprawione formatowanie */}
           <MapComponent lat={location.lat} lon={location.lon} />
+          <CameraComponent />
         </div>
       ) : (
         <p>Oczekiwanie na sygnał GPS...</p>
