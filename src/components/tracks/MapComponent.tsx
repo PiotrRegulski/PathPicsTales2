@@ -98,6 +98,22 @@ const MapComponent: React.FC<UserLocation> = () => {
       )}
 
       <p>🚗 Prędkość: {speed.toFixed(2)} m/s</p>
+
+      {/* 🔄 Przycisk do ponownego sprawdzenia GPS */}
+      <button
+        onClick={() => {
+          navigator.permissions.query({ name: "geolocation" }).then((result) => {
+            setGpsPermission(result.state);
+            if (result.state === "granted") {
+              window.location.reload();
+            }
+          });
+        }}
+        className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition"
+      >
+        🔄 Sprawdź ponownie dostęp do GPS
+      </button>
+
       <div ref={mapRef} className="container h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg" />
     </div>
   );

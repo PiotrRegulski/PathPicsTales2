@@ -34,6 +34,7 @@ export default function Trasa() {
       ) : (
         <p>Oczekiwanie na sygnał GPS...</p>
       )}
+      
     </div>
   );
 }
