@@ -2,9 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
 // 🔹 **Import Leaflet poprawnie**
-const L = typeof window !== "undefined" ? await import("leaflet") : null;
+
 
 type UserLocation = { lat: number; lon: number };
 
