@@ -6,7 +6,6 @@ import L from "leaflet";
 
 // 🔹 **Import Leaflet poprawnie**
 
-
 type UserLocation = { lat: number; lon: number };
 
 const MapComponent: React.FC<UserLocation> = () => {
@@ -36,11 +35,14 @@ const MapComponent: React.FC<UserLocation> = () => {
     }
 
     if (mapRef.current && !mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([51.9194, 19.1451], 13); // Początkowe współrzędne Polski
+      mapInstance.current = L.map(mapRef.current).setView(
+        [51.9194, 19.1451],
+        13
+      ); // Początkowe współrzędne Polski
 
-      L.tileLayer("https://{s}.tile.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", {
-        maxZoom: 18,
-        attribution: "&copy; OpenStreetMap contributors & CyclOSM",
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapInstance.current);
     }
 
@@ -74,31 +76,41 @@ const MapComponent: React.FC<UserLocation> = () => {
     );
 
     return () => {
-     if (watchIdRef.current !== null) {
-    navigator.geolocation.clearWatch(watchIdRef.current);
-  }
-  if (mapInstance.current) {
-    // Usuwanie tylko warstw zamiast całkowitego usunięcia mapy
-    mapInstance.current.eachLayer((layer) => {
-      if (!(layer instanceof L.TileLayer)) { 
-        mapInstance.current?.removeLayer(layer);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
       }
-    });
-  }
-  markerRef.current = null;
+      if (mapInstance.current) {
+        // Usuwanie tylko warstw zamiast całkowitego usunięcia mapy
+        mapInstance.current.eachLayer((layer) => {
+          if (!(layer instanceof L.TileLayer)) {
+            mapInstance.current?.removeLayer(layer);
+          }
+        });
+      }
+      markerRef.current = null;
     };
   }, []);
 
   return (
     <div>
-      {gpsPermission === "denied" && <p>🚫 Dostęp do GPS został **zablokowany** przez użytkownika.</p>}
-      {gpsPermission === "unsupported" && <p>❌ **Urządzenie nie obsługuje GPS!**</p>}
-      {gpsPermission === "prompt" && <p>⏳ **Czekamy na zgodę użytkownika...**</p>}
+      {gpsPermission === "denied" && (
+        <p>🚫 Dostęp do GPS został **zablokowany** przez użytkownika.</p>
+      )}
+      {gpsPermission === "unsupported" && (
+        <p>❌ **Urządzenie nie obsługuje GPS!**</p>
+      )}
+      {gpsPermission === "prompt" && (
+        <p>⏳ **Czekamy na zgodę użytkownika...**</p>
+      )}
 
       {userLocation ? (
-        <p>📍 Twoja aktualna lokalizacja: {userLocation.lat}, {userLocation.lon}</p>
+        <p>
+          📍 Twoja aktualna lokalizacja: {userLocation.lat}, {userLocation.lon}
+        </p>
       ) : (
-        gpsPermission === "granted" && <p>🔄 **Oczekiwanie na sygnał GPS...**</p>
+        gpsPermission === "granted" && (
+          <p>🔄 **Oczekiwanie na sygnał GPS...**</p>
+        )
       )}
 
       <p>🚗 Prędkość: {speed.toFixed(2)} m/s</p>
@@ -106,19 +118,24 @@ const MapComponent: React.FC<UserLocation> = () => {
       {/* 🔄 Przycisk do ponownego sprawdzenia GPS */}
       <button
         onClick={() => {
-          navigator.permissions.query({ name: "geolocation" }).then((result) => {
-            setGpsPermission(result.state);
-            if (result.state === "granted") {
-              window.location.reload();
-            }
-          });
+          navigator.permissions
+            .query({ name: "geolocation" })
+            .then((result) => {
+              setGpsPermission(result.state);
+              if (result.state === "granted") {
+                window.location.reload();
+              }
+            });
         }}
         className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 transition"
       >
         🔄 Sprawdź ponownie dostęp do GPS
       </button>
 
-      <div ref={mapRef} className="container h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg" />
+      <div
+        ref={mapRef}
+        className="container h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg"
+      />
     </div>
   );
 };
