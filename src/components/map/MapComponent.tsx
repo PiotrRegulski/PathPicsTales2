@@ -8,6 +8,7 @@ import L from "leaflet";
 type UserPosition = {
   lat: number;
   lon: number;
+  
 };
 
 // 🔹 Definiowanie ikony markera Leaflet
@@ -23,6 +24,7 @@ const markerIcon: L.Icon = new L.Icon({
 const MapComponent: React.FC<UserPosition> = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]); // 🔹 Tablica współrzędnych trasy
+  const [speed, setSpeed] = useState<number>(0); // 🔹 Prędkość użytkownika
 
   
   useEffect(() => {
@@ -30,6 +32,10 @@ const MapComponent: React.FC<UserPosition> = () => {
       const watchId = navigator.geolocation.watchPosition(
         (position: GeolocationPosition) => {
           const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
+          setUserPosition(newPosition);
+
+           // 🔹 Aktualizacja prędkości w km/h (m/s * 3.6)
+          setSpeed(position.coords.speed ? position.coords.speed * 3.6 : 0);
                 // 🔹 Sprawdź, czy nowa pozycja różni się istotnie od poprzedniej
         setTrack((prevTrack) => {
           const lastPosition = prevTrack[prevTrack.length - 1];
@@ -51,6 +57,8 @@ const MapComponent: React.FC<UserPosition> = () => {
   return (
      <div>
       {userPosition ? (
+        <>
+         <p className="text-center font-bold text-xl">🚗 Prędkość: {speed.toFixed(2)} km/h</p>
         <MapContainer center={[userPosition.lat, userPosition.lon]} zoom={18} className="h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950 mx-4">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
@@ -62,6 +70,7 @@ const MapComponent: React.FC<UserPosition> = () => {
           {/* 🔹 Rysowanie trasy */}
           {track.length > 1 && <Polyline positions={track.map((pos) => [pos.lat, pos.lon])} color="blue" />}
         </MapContainer>
+        </>
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>
       )}
