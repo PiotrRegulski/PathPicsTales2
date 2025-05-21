@@ -47,7 +47,7 @@ const MapComponent = () => {
           });
         },
         (error: GeolocationPositionError) => console.error("❌ Błąd GPS:", error.message),
-        { enableHighAccuracy: false, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
 
       return () => navigator.geolocation.clearWatch(watchId);
