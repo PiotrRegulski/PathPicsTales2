@@ -30,9 +30,16 @@ const MapComponent: React.FC<UserPosition> = () => {
       const watchId = navigator.geolocation.watchPosition(
         (position: GeolocationPosition) => {
           const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
-
+                // 🔹 Sprawdź, czy nowa pozycja różni się istotnie od poprzedniej
+        setTrack((prevTrack) => {
+          const lastPosition = prevTrack[prevTrack.length - 1];
+          if (!lastPosition || (Math.abs(lastPosition.lat - newPosition.lat) > 0.0001 && Math.abs(lastPosition.lon - newPosition.lon) > 0.0001)) {
+            return [...prevTrack, newPosition];
+          }
+          return prevTrack;
+        });
           setUserPosition(newPosition);
-          setTrack((prevTrack) => [...prevTrack, newPosition]); // 🔹 Dodanie nowej pozycji do trasy
+        
         },
         (error: GeolocationPositionError) => console.error("❌ Błąd GPS:", error.message),
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
