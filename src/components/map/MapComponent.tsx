@@ -41,7 +41,8 @@ const MapComponent: React.FC<UserPosition> = () => {
   return (
     <div>
       {userPosition ? (
-        <MapContainer center={[userPosition.lat, userPosition.lon]} zoom={13} className="h-[15rem] w-[300px] mx-auto rounded-lg shadow-lg">
+    
+        <MapContainer center={[userPosition.lat, userPosition.lon]} zoom={13} className="h-[25rem] w-screen  rounded-lg shadow-lg border-2 border-lime-950 mx-4">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
           <Marker position={[userPosition.lat, userPosition.lon]} icon={markerIcon}>
             <Popup>📍 Twoja aktualna lokalizacja</Popup>

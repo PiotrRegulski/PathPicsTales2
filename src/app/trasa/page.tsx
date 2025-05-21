@@ -10,7 +10,7 @@ const defaultPosition: { lat: number; lon: number } = { lat: 51.9194, lon: 19.14
 
   return (
     <div className="flex flex-col items-center w-full h-screen">
-      <h1 className="text-2xl font-bold">📍 Mapa</h1>
+      <h1 className="text-2xl font-bold">PathPicsTales</h1>
       <MapComponent lat={defaultPosition.lat} lon={defaultPosition.lon} />
     </div>
   );
