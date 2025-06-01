@@ -31,11 +31,12 @@ useEffect(() => {
   if ("geolocation" in navigator) {
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
+        const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
+        setUserPosition(newPosition); // ustawiaj zawsze
+
         const newSpeed = position.coords.speed ? position.coords.speed * 3.6 : 0;
 
         if (newSpeed >= MIN_SPEED) {
-          const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
-          setUserPosition(newPosition);
           setSpeed(newSpeed);
 
           setTrack((prevTrack) => {
@@ -46,7 +47,6 @@ useEffect(() => {
             return prevTrack;
           });
         } else {
-          // Użytkownik stoi w miejscu - można opcjonalnie ustawić prędkość na 0
           setSpeed(0);
         }
       },
@@ -57,6 +57,7 @@ useEffect(() => {
     return () => navigator.geolocation.clearWatch(watchId);
   }
 }, []);
+
 
   return (
     <div>
