@@ -67,7 +67,7 @@ const MapComponent = () => {
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
-  // Ustawiamy pozycję użytkownika tylko raz na starcie
+  // Początkowa pozycja - tylko raz na starcie
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -85,7 +85,7 @@ const MapComponent = () => {
     }
   }, []);
 
-  // Aktualizujemy trasę, prędkość itd. tylko po kliknięciu Start
+  // Aktualizacja pozycji, trasy i statystyk tylko po kliknięciu Start i przy odpowiedniej prędkości
   useEffect(() => {
     if (!isTracking) return;
 
@@ -101,39 +101,46 @@ const MapComponent = () => {
               lon: position.coords.longitude,
             };
 
-            setUserPosition(newPosition);
-
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
             if (newSpeed >= MIN_SPEED) {
-              setSpeed(newSpeed);
+              setUserPosition((prevPosition) => {
+                if (!prevPosition) return newPosition;
+                const dist = getDistanceFromLatLonInMeters(
+                  prevPosition.lat,
+                  prevPosition.lon,
+                  newPosition.lat,
+                  newPosition.lon
+                );
+                if (dist < MIN_DISTANCE) {
+                  return prevPosition;
+                }
+                return newPosition;
+              });
 
               if (!startTime) {
                 setStartTime(Date.now());
-                setPausedTime(0);
-                setTravelTime(0);
-                setTrack([newPosition]);
-                setDistance(0);
-              } else {
-                setTrack((prevTrack) => {
-                  if (prevTrack.length === 0) {
-                    return [newPosition];
-                  }
-                  const lastPosition = prevTrack[prevTrack.length - 1];
-                  const dist = getDistanceFromLatLonInMeters(
-                    lastPosition.lat,
-                    lastPosition.lon,
-                    newPosition.lat,
-                    newPosition.lon
-                  );
-                  if (dist >= MIN_DISTANCE) {
-                    setDistance((prevDistance) => prevDistance + dist);
-                    return [...prevTrack, newPosition];
-                  }
-                  return prevTrack;
-                });
               }
+              setSpeed(newSpeed);
+
+              setTrack((prevTrack) => {
+                if (prevTrack.length === 0) {
+                  return [newPosition];
+                }
+                const lastPosition = prevTrack[prevTrack.length - 1];
+                const dist = getDistanceFromLatLonInMeters(
+                  lastPosition.lat,
+                  lastPosition.lon,
+                  newPosition.lat,
+                  newPosition.lon
+                );
+                if (dist >= MIN_DISTANCE) {
+                  setDistance((prevDistance) => prevDistance + dist);
+                  return [...prevTrack, newPosition];
+                }
+                return prevTrack;
+              });
             } else {
               setSpeed(0);
             }
@@ -157,7 +164,6 @@ const MapComponent = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-     
   }, [isTracking, startTime]);
 
   // Aktualizacja czasu podróży tylko gdy isTracking i startTime
