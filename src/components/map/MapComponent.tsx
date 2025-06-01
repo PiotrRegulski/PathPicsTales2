@@ -55,11 +55,20 @@ function getDistanceFromLatLonInMeters(
   return R * c;
 }
 
+// 🔹 Formatowanie czasu w mm:ss
+function formatTime(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}m ${secs}s`;
+}
+
 const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0); // w metrach
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [travelTime, setTravelTime] = useState<number>(0); // w sekundach
 
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -91,6 +100,9 @@ const MapComponent = () => {
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
             if (newSpeed >= MIN_SPEED) {
+              if (!startTime) {
+                setStartTime(Date.now());
+              }
               setSpeed(newSpeed);
 
               setTrack((prevTrack) => {
@@ -125,7 +137,18 @@ const MapComponent = () => {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, []);
+  }, [startTime]);
+
+  // Aktualizacja czasu podróży co sekundę
+  useEffect(() => {
+    if (!startTime) return;
+
+    const interval = setInterval(() => {
+      setTravelTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startTime]);
 
   return (
     <div>
@@ -156,15 +179,27 @@ const MapComponent = () => {
             )}
             <MapUpdater position={[userPosition.lat, userPosition.lon]} />
           </MapContainer>
-          <div className="flex m-4 w-full justify-between">
-            <div>
-              <p className="text-center font-bold text-xl">
-              Prędkość: {speed.toFixed(2)} km/h
+          <div className="flex flex-col sm:flex-row justify-around items-center gap-4 m-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+            <div className="flex flex-col items-center bg-lime-100 p-4 rounded-lg shadow-sm w-40">
+              <p className="text-lg font-semibold text-lime-800">🚗 Prędkość</p>
+              <p className="text-2xl font-bold text-lime-900">
+                {speed.toFixed(2)} km/h
               </p>
             </div>
-            <div>
-              <p className="text-center font-bold text-xl">
-                Przebyta odległość: {(distance / 1000).toFixed(2)} km
+            <div className="flex flex-col items-center bg-blue-100 p-4 rounded-lg shadow-sm w-40">
+              <p className="text-lg font-semibold text-blue-800">
+                🛣️ Odległość
+              </p>
+              <p className="text-2xl font-bold text-blue-900">
+                {(distance / 1000).toFixed(2)} km
+              </p>
+            </div>
+            <div className="flex flex-col items-center bg-yellow-100 p-4 rounded-lg shadow-sm w-40">
+              <p className="text-lg font-semibold text-yellow-800">
+                ⏱️ Czas podróży
+              </p>
+              <p className="text-2xl font-bold text-yellow-900">
+                {formatTime(travelTime)}
               </p>
             </div>
           </div>
