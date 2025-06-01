@@ -6,9 +6,7 @@ import {
   Marker,
   Popup,
   Polyline,
- 
 } from "react-leaflet";
-
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
@@ -29,21 +27,17 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Minimalna odległość w metrach, poniżej której ignorujemy zmianę pozycji
 const MIN_DISTANCE = 5;
-// Minimalna prędkość w km/h do aktualizacji trasy i prędkości
 const MIN_SPEED = 3;
-// Maksymalna dopuszczalna dokładność GPS w metrach
 const MAX_ACCURACY = 25;
 
-// Funkcja do obliczania odległości między dwoma punktami GPS (Haversine formula)
 function getDistanceFromLatLonInMeters(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ) {
-  const R = 6371000; // promień Ziemi w metrach
+  const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -56,23 +50,20 @@ function getDistanceFromLatLonInMeters(
   return R * c;
 }
 
-// Formatowanie czasu w mm:ss
 function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}m ${secs}s`;
 }
 
-
-
 const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
-  const [distance, setDistance] = useState<number>(0); // w metrach
+  const [distance, setDistance] = useState<number>(0);
   const [startTime, setStartTime] = useState<number | null>(null);
-  const [pausedTime, setPausedTime] = useState<number>(0); // suma sekund z poprzednich sesji
-  const [travelTime, setTravelTime] = useState<number>(0); // w sekundach
+  const [pausedTime, setPausedTime] = useState<number>(0);
+  const [travelTime, setTravelTime] = useState<number>(0);
   const [autoCenter, setAutoCenter] = useState<boolean>(true);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -83,6 +74,14 @@ const MapComponent = () => {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setGpsError(null);
+
+          // Ustawiamy userPosition ZAWSZE
+          setUserPosition({
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          });
+
+          // Dalej śledzimy trasę tylko jeśli tracking jest aktywny
           if (!isTracking) return;
 
           if (position.coords.accuracy <= MAX_ACCURACY) {
@@ -91,49 +90,30 @@ const MapComponent = () => {
               lon: position.coords.longitude,
             };
 
-            setUserPosition((prevPosition) => {
-              if (!prevPosition) return newPosition;
+            setTrack((prevTrack) => {
+              if (!prevTrack.length) {
+                return [newPosition];
+              }
+              const lastPosition = prevTrack[prevTrack.length - 1];
               const dist = getDistanceFromLatLonInMeters(
-                prevPosition.lat,
-                prevPosition.lon,
+                lastPosition.lat,
+                lastPosition.lon,
                 newPosition.lat,
                 newPosition.lon
               );
-              if (dist < MIN_DISTANCE) {
-                return prevPosition;
+              if (dist >= MIN_DISTANCE) {
+                setDistance((prevDistance) => prevDistance + dist);
+                return [...prevTrack, newPosition];
               }
-              return newPosition;
+              return prevTrack;
             });
 
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
+            setSpeed(newSpeed >= MIN_SPEED ? newSpeed : 0);
 
-            if (newSpeed >= MIN_SPEED) {
-              if (!startTime) {
-                setStartTime(Date.now());
-              }
-              setSpeed(newSpeed);
-
-              setTrack((prevTrack) => {
-                if (prevTrack.length === 0) {
-                  // zawsze dodaj pierwszy punkt
-                  return [newPosition];
-                }
-                const lastPosition = prevTrack[prevTrack.length - 1];
-                const dist = getDistanceFromLatLonInMeters(
-                  lastPosition.lat,
-                  lastPosition.lon,
-                  newPosition.lat,
-                  newPosition.lon
-                );
-                if (dist >= MIN_DISTANCE) {
-                  setDistance((prevDistance) => prevDistance + dist);
-                  return [...prevTrack, newPosition];
-                }
-                return prevTrack;
-              });
-            } else {
-              setSpeed(0);
+            if (newSpeed >= MIN_SPEED && !startTime) {
+              setStartTime(Date.now());
             }
           } else {
             setGpsError(
@@ -170,7 +150,6 @@ const MapComponent = () => {
   // Funkcje obsługi przycisków
   const handleStartPause = () => {
     if (isTracking) {
-      // Pauza - zatrzymaj śledzenie i prędkość, zapisz czas
       setIsTracking(false);
       setSpeed(0);
       if (startTime) {
@@ -180,7 +159,6 @@ const MapComponent = () => {
         setStartTime(null);
       }
     } else {
-      // Start lub wznowienie
       setIsTracking(true);
       if (!startTime) {
         setStartTime(Date.now());
@@ -298,5 +276,3 @@ const MapComponent = () => {
 };
 
 export default MapComponent;
-// Komponent MapComponent renderuje mapę z aktualną lokalizacją użytkownika, śledzi trasę i prędkość, a także umożliwia start/pauzę i resetowanie trasy.
-// Używa Leaflet do wyświetlania mapy i markerów, a także obsługuje błędy GPS i automatyczne centrowanie mapy.
