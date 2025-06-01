@@ -6,11 +6,11 @@ import {
   Marker,
   Popup,
   Polyline,
+  useMap,
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import MapUpdater from "./MapUpdater";
 
 // 🔹 Definiowanie typu dla pozycji użytkownika
 type UserPosition = {
@@ -29,7 +29,7 @@ const markerIcon: L.Icon = new L.Icon({
 });
 
 // 🔹 Minimalna odległość w metrach, poniżej której ignorujemy zmianę pozycji
-const MIN_DISTANCE = 15;
+const MIN_DISTANCE = 5; // zmniejszone dla płynniejszej linii
 // 🔹 Minimalna prędkość w km/h do aktualizacji trasy i prędkości
 const MIN_SPEED = 3;
 // 🔹 Maksymalna dopuszczalna dokładność GPS w metrach
@@ -62,6 +62,25 @@ function formatTime(seconds: number) {
   return `${mins}m ${secs}s`;
 }
 
+// 🔹 Komponent do aktualizacji widoku mapy tylko jeśli autoCenter jest true
+const MapUpdater = ({
+  position,
+  autoCenter,
+}: {
+  position: [number, number];
+  autoCenter: boolean;
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (autoCenter) {
+      map.setView(position);
+    }
+  }, [position, autoCenter, map]);
+
+  return null;
+};
+
 const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
@@ -69,11 +88,15 @@ const MapComponent = () => {
   const [distance, setDistance] = useState<number>(0); // w metrach
   const [startTime, setStartTime] = useState<number | null>(null);
   const [travelTime, setTravelTime] = useState<number>(0); // w sekundach
+  const [autoCenter, setAutoCenter] = useState<boolean>(true);
+  const [isTracking, setIsTracking] = useState<boolean>(false);
 
   useEffect(() => {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
+          if (!isTracking) return; // aktualizuj tylko jeśli śledzimy
+
           if (position.coords.accuracy <= MAX_ACCURACY) {
             const newPosition = {
               lat: position.coords.latitude,
@@ -82,14 +105,13 @@ const MapComponent = () => {
 
             setUserPosition((prevPosition) => {
               if (prevPosition) {
-                const distance = getDistanceFromLatLonInMeters(
+                const dist = getDistanceFromLatLonInMeters(
                   prevPosition.lat,
                   prevPosition.lon,
                   newPosition.lat,
                   newPosition.lon
                 );
-                if (distance < MIN_DISTANCE) {
-                  // Zmiana pozycji zbyt mała, ignoruj
+                if (dist < MIN_DISTANCE) {
                   return prevPosition;
                 }
               }
@@ -110,14 +132,14 @@ const MapComponent = () => {
                 if (!lastPosition) {
                   return [newPosition];
                 }
-                const distance = getDistanceFromLatLonInMeters(
+                const dist = getDistanceFromLatLonInMeters(
                   lastPosition.lat,
                   lastPosition.lon,
                   newPosition.lat,
                   newPosition.lon
                 );
-                if (distance >= MIN_DISTANCE) {
-                  setDistance((prevDistance) => prevDistance + distance);
+                if (dist >= MIN_DISTANCE) {
+                  setDistance((prevDistance) => prevDistance + dist);
                   return [...prevTrack, newPosition];
                 }
                 return prevTrack;
@@ -137,7 +159,7 @@ const MapComponent = () => {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [startTime]);
+  }, [isTracking, startTime]);
 
   // Aktualizacja czasu podróży co sekundę
   useEffect(() => {
@@ -149,6 +171,30 @@ const MapComponent = () => {
 
     return () => clearInterval(interval);
   }, [startTime]);
+
+  // Funkcje obsługi przycisków
+  const handleStartPause = () => {
+    if (isTracking) {
+      // Pauza - zatrzymaj śledzenie i prędkość
+      setIsTracking(false);
+      setSpeed(0);
+    } else {
+      // Start lub wznowienie
+      setIsTracking(true);
+      if (!startTime) {
+        setStartTime(Date.now());
+      }
+    }
+  };
+
+  const handleReset = () => {
+    setIsTracking(false);
+    setTrack([]);
+    setDistance(0);
+    setSpeed(0);
+    setTravelTime(0);
+    setStartTime(null);
+  };
 
   return (
     <div>
@@ -177,30 +223,49 @@ const MapComponent = () => {
                 color="blue"
               />
             )}
-            <MapUpdater position={[userPosition.lat, userPosition.lon]} />
+
+            <MapUpdater position={[userPosition.lat, userPosition.lon]} autoCenter={autoCenter} />
           </MapContainer>
-          <div className="flex flex-col lg:flex-row justify-around items-center gap-4 m-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+
+          {/* Panel sterowania */}
+          <div className="flex justify-center gap-4 my-4">
+            <button
+              onClick={handleStartPause}
+              className={`px-4 py-2 rounded text-white ${
+                isTracking ? "bg-yellow-500 hover:bg-yellow-600" : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {isTracking ? "Pauza" : "Start"}
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-red-500 rounded text-white hover:bg-red-600"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => setAutoCenter((prev) => !prev)}
+              className="px-4 py-2 bg-blue-500 rounded text-white hover:bg-blue-600"
+            >
+              {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
+            </button>
+          </div>
+
+          {/* Panel informacji */}
+          <div className="flex gap-4 m-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto w-full">
             <div className="flex flex-col items-center bg-lime-100 p-4 rounded-lg shadow-sm w-40">
               <p className="text-lg font-semibold text-lime-800">🚗 Prędkość</p>
-              <p className="text-2xl font-bold text-lime-900">
-                {speed.toFixed(2)} km/h
-              </p>
+              <p className="text-2xl font-bold text-lime-900">{speed.toFixed(2)} km/h</p>
             </div>
             <div className="flex flex-col items-center bg-blue-100 p-4 rounded-lg shadow-sm w-40">
-              <p className="text-lg font-semibold text-blue-800">
-                🛣️ Odległość
-              </p>
+              <p className="text-lg font-semibold text-blue-800">🛣️ Odległość</p>
               <p className="text-2xl font-bold text-blue-900">
                 {(distance / 1000).toFixed(2)} km
               </p>
             </div>
             <div className="flex flex-col items-center bg-yellow-100 p-4 rounded-lg shadow-sm w-40">
-              <p className="text-lg font-semibold text-yellow-800">
-                ⏱️ Czas podróży
-              </p>
-              <p className="text-2xl font-bold text-yellow-900">
-                {formatTime(travelTime)}
-              </p>
+              <p className="text-lg font-semibold text-yellow-800">⏱️ Czas podróży</p>
+              <p className="text-2xl font-bold text-yellow-900">{formatTime(travelTime)}</p>
             </div>
           </div>
         </>
@@ -212,3 +277,4 @@ const MapComponent = () => {
 };
 
 export default MapComponent;
+// 🔹 Komponent MapComponent renderuje mapę z aktualną pozycją użytkownika, śledzi trasę i wyświetla informacje o prędkości, odległości i czasie podróży.
