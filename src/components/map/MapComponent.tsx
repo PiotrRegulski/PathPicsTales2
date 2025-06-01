@@ -179,7 +179,7 @@ const MapComponent = () => {
             )}
             <MapUpdater position={[userPosition.lat, userPosition.lon]} />
           </MapContainer>
-          <div className="flex flex-col sm:flex-row justify-around items-center gap-4 m-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+          <div className="flex flex-col lg:flex-row justify-around items-center gap-4 m-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
             <div className="flex flex-col items-center bg-lime-100 p-4 rounded-lg shadow-sm w-40">
               <p className="text-lg font-semibold text-lime-800">🚗 Prędkość</p>
               <p className="text-2xl font-bold text-lime-900">
