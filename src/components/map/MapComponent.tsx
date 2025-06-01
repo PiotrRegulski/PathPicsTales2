@@ -21,7 +21,7 @@ const markerIcon: L.Icon = new L.Icon({
 });
 
 // 🔹 Minimalna odległość w metrach, poniżej której ignorujemy zmianę pozycji
-const MIN_DISTANCE = 5;
+const MIN_DISTANCE = 15;
 // 🔹 Minimalna prędkość w km/h do aktualizacji trasy i prędkości
 const MIN_SPEED = 3;
 // 🔹 Maksymalna dopuszczalna dokładność GPS w metrach
