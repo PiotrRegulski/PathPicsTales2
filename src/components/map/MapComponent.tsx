@@ -17,7 +17,6 @@ type UserPosition = {
   lon: number;
 };
 
-// Ikona markera Leaflet
 const markerIcon: L.Icon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
@@ -27,7 +26,10 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-// Funkcja do obliczania odległości między dwoma punktami GPS (Haversine formula)
+const MIN_DISTANCE = 5;
+const MIN_SPEED = 3;
+const MAX_ACCURACY = 25;
+
 function getDistanceFromLatLonInMeters(
   lat1: number,
   lon1: number,
@@ -47,7 +49,6 @@ function getDistanceFromLatLonInMeters(
   return R * c;
 }
 
-// Formatowanie czasu w mm:ss
 function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -55,11 +56,6 @@ function formatTime(seconds: number) {
 }
 
 const MapComponent = () => {
-  // Parametry testowe jako stan
-  const [minDistance, setMinDistance] = useState(5);
-  const [minSpeed, setMinSpeed] = useState(3);
-  const [maxAccuracy, setMaxAccuracy] = useState(25);
-
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
@@ -70,53 +66,65 @@ const MapComponent = () => {
   const [autoCenter, setAutoCenter] = useState<boolean>(true);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [isActiveTracking, setIsActiveTracking] = useState<boolean>(false);
 
-  // Obsługa GPS
+  // GPS obsługa
   useEffect(() => {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           setGpsError(null);
 
-          // userPosition zawsze aktualizowane
+          // Ustaw userPosition zawsze na starcie
           setUserPosition({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
 
-          // Dalej śledzimy trasę tylko jeśli tracking jest aktywny
+          // Jeśli nie kliknięto Start, nie śledź trasy
           if (!isTracking) return;
 
-          if (position.coords.accuracy <= maxAccuracy) {
+          if (position.coords.accuracy <= MAX_ACCURACY) {
             const newPosition = {
               lat: position.coords.latitude,
               lon: position.coords.longitude,
             };
 
-            setTrack((prevTrack) => {
-              if (!prevTrack.length) {
-                return [newPosition];
-              }
-              const lastPosition = prevTrack[prevTrack.length - 1];
-              const dist = getDistanceFromLatLonInMeters(
-                lastPosition.lat,
-                lastPosition.lon,
-                newPosition.lat,
-                newPosition.lon
-              );
-              if (dist >= minDistance) {
-                setDistance((prevDistance) => prevDistance + dist);
-                return [...prevTrack, newPosition];
-              }
-              return prevTrack;
-            });
-
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
-            setSpeed(newSpeed >= minSpeed ? newSpeed : 0);
 
-            if (newSpeed >= minSpeed && !startTime) {
+            setSpeed(newSpeed);
+
+            // Rozpocznij aktywne śledzenie tylko jeśli prędkość przekroczy MIN_SPEED
+            if (!isActiveTracking && newSpeed >= MIN_SPEED) {
+              setIsActiveTracking(true);
               setStartTime(Date.now());
+              setTrack([newPosition]);
+              setDistance(0);
+              setTravelTime(0);
+              setPausedTime(0);
+              return;
+            }
+
+            // Jeśli aktywne śledzenie trwa
+            if (isActiveTracking && newSpeed >= MIN_SPEED) {
+              setTrack((prevTrack) => {
+                if (!prevTrack.length) {
+                  return [newPosition];
+                }
+                const lastPosition = prevTrack[prevTrack.length - 1];
+                const dist = getDistanceFromLatLonInMeters(
+                  lastPosition.lat,
+                  lastPosition.lon,
+                  newPosition.lat,
+                  newPosition.lon
+                );
+                if (dist >= MIN_DISTANCE) {
+                  setDistance((prevDistance) => prevDistance + dist);
+                  return [...prevTrack, newPosition];
+                }
+                return prevTrack;
+              });
             }
           } else {
             setGpsError(
@@ -135,11 +143,11 @@ const MapComponent = () => {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [isTracking, startTime, minDistance, minSpeed, maxAccuracy]);
+  }, [isTracking, isActiveTracking]);
 
-  // Aktualizacja czasu podróży co sekundę TYLKO gdy isTracking
+  // Aktualizacja czasu podróży tylko gdy aktywne śledzenie
   useEffect(() => {
-    if (!startTime || !isTracking) return;
+    if (!startTime || !isActiveTracking) return;
 
     const interval = setInterval(() => {
       setTravelTime(
@@ -148,12 +156,13 @@ const MapComponent = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime, isTracking, pausedTime]);
+  }, [startTime, isActiveTracking, pausedTime]);
 
-  // Funkcje obsługi przycisków
+  // Obsługa przycisków
   const handleStartPause = () => {
     if (isTracking) {
       setIsTracking(false);
+      setIsActiveTracking(false);
       setSpeed(0);
       if (startTime) {
         setPausedTime(
@@ -163,14 +172,18 @@ const MapComponent = () => {
       }
     } else {
       setIsTracking(true);
-      if (!startTime) {
-        setStartTime(Date.now());
-      }
+      setIsActiveTracking(false);
+      setTrack([]);
+      setDistance(0);
+      setTravelTime(0);
+      setPausedTime(0);
+      setStartTime(null);
     }
   };
 
   const handleReset = () => {
     setIsTracking(false);
+    setIsActiveTracking(false);
     setTrack([]);
     setDistance(0);
     setSpeed(0);
@@ -182,46 +195,6 @@ const MapComponent = () => {
 
   return (
     <div>
-      {/* Panel ustawień testowych */}
-      <div className="flex flex-wrap gap-4 justify-center items-center my-4 bg-gray-50 p-4 rounded-lg shadow">
-        <label className="flex items-center gap-2">
-          Min. odległość (m):
-          <input
-            type="number"
-            min={1}
-            max={100}
-            step={1}
-            value={minDistance}
-            onChange={e => setMinDistance(Number(e.target.value))}
-            className="border rounded p-1 w-16"
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          Min. prędkość (km/h):
-          <input
-            type="number"
-            min={0}
-            max={30}
-            step={0.1}
-            value={minSpeed}
-            onChange={e => setMinSpeed(Number(e.target.value))}
-            className="border rounded p-1 w-16"
-          />
-        </label>
-        <label className="flex items-center gap-2">
-          Max. dokładność (m):
-          <input
-            type="number"
-            min={1}
-            max={100}
-            step={1}
-            value={maxAccuracy}
-            onChange={e => setMaxAccuracy(Number(e.target.value))}
-            className="border rounded p-1 w-16"
-          />
-        </label>
-      </div>
-
       {userPosition ? (
         <>
           <MapContainer
