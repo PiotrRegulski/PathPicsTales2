@@ -10,6 +10,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
+import TrackExporter from "./TrackExporter";
 
 // Typ pozycji użytkownika
 type UserPosition = {
@@ -267,6 +268,8 @@ const MapComponent = () => {
             >
               {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
             </button>
+              <TrackExporter track={track} distance={distance} travelTime={travelTime} />
+
           </div>
 
           {/* Panel informacji */}
