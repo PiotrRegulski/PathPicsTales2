@@ -5,16 +5,17 @@ import { useMap } from "react-leaflet";
 
 interface MapUpdaterProps {
   position: [number, number];
+  autoCenter: boolean;
 }
 
-const MapUpdater = ({ position }: MapUpdaterProps) => {
+const MapUpdater = ({ position, autoCenter }: MapUpdaterProps) => {
   const map = useMap();
 
   useEffect(() => {
-    if (position) {
+    if (autoCenter) {
       map.setView(position);
     }
-  }, [position, map]);
+  }, [position, autoCenter, map]);
 
   return null;
 };
