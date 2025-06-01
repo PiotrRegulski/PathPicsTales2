@@ -25,38 +25,48 @@ const MapComponent = () => {
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0); // 🔹 Prędkość użytkownika
 const MIN_SPEED = 3; // km/h
+ const MAX_ACCURACY = 25; // metry - maksymalna dopuszczalna dokładność
 
+ useEffect(() => {
+    if ("geolocation" in navigator) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          // Filtruj pozycje o zbyt niskiej dokładności
+          if (position.coords.accuracy <= MAX_ACCURACY) {
+            const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
+            setUserPosition(newPosition); // ustawiaj zawsze pozycję, jeśli dokładność jest OK
 
-useEffect(() => {
-  if ("geolocation" in navigator) {
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
-        setUserPosition(newPosition); // ustawiaj zawsze
+            const newSpeed = position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
-        const newSpeed = position.coords.speed ? position.coords.speed * 3.6 : 0;
+            if (newSpeed >= MIN_SPEED) {
+              setSpeed(newSpeed);
 
-        if (newSpeed >= MIN_SPEED) {
-          setSpeed(newSpeed);
-
-          setTrack((prevTrack) => {
-            const lastPosition = prevTrack[prevTrack.length - 1];
-            if (!lastPosition || (Math.abs(lastPosition.lat - newPosition.lat) > 0.00005 && Math.abs(lastPosition.lon - newPosition.lon) > 0.00005)) {
-              return [...prevTrack, newPosition];
+              setTrack((prevTrack) => {
+                const lastPosition = prevTrack[prevTrack.length - 1];
+                // Dodaj nowy punkt, jeśli różnica w lat lub lon jest większa niż 0.00005
+                if (
+                  !lastPosition ||
+                  Math.abs(lastPosition.lat - newPosition.lat) > 0.00005 ||
+                  Math.abs(lastPosition.lon - newPosition.lon) > 0.00005
+                ) {
+                  return [...prevTrack, newPosition];
+                }
+                return prevTrack;
+              });
+            } else {
+              setSpeed(0);
             }
-            return prevTrack;
-          });
-        } else {
-          setSpeed(0);
-        }
-      },
-      (error) => console.error("❌ Błąd GPS:", error.message),
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-    );
+          } else {
+            console.warn(`Pomijam pozycję o niskiej dokładności: ${position.coords.accuracy} m`);
+          }
+        },
+        (error) => console.error("❌ Błąd GPS:", error.message),
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
 
-    return () => navigator.geolocation.clearWatch(watchId);
-  }
-}, []);
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
 
   return (
