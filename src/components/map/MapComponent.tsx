@@ -24,20 +24,20 @@ const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0); // 🔹 Prędkość użytkownika
+const MIN_SPEED = 3; // km/h
 
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position: GeolocationPosition) => {
+
+useEffect(() => {
+  if ("geolocation" in navigator) {
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const newSpeed = position.coords.speed ? position.coords.speed * 3.6 : 0;
+
+        if (newSpeed >= MIN_SPEED) {
           const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
-
-          // 🔹 Aktualizacja pozycji użytkownika
           setUserPosition(newPosition);
+          setSpeed(newSpeed);
 
-          // 🔹 Aktualizacja prędkości w km/h (m/s * 3.6)
-          setSpeed(position.coords.speed ? position.coords.speed * 3.6 : 0);
-
-          // 🔹 Sprawdzenie, czy nowa pozycja różni się istotnie od poprzedniej
           setTrack((prevTrack) => {
             const lastPosition = prevTrack[prevTrack.length - 1];
             if (!lastPosition || (Math.abs(lastPosition.lat - newPosition.lat) > 0.00005 && Math.abs(lastPosition.lon - newPosition.lon) > 0.00005)) {
@@ -45,14 +45,18 @@ const MapComponent = () => {
             }
             return prevTrack;
           });
-        },
-        (error: GeolocationPositionError) => console.error("❌ Błąd GPS:", error.message),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
+        } else {
+          // Użytkownik stoi w miejscu - można opcjonalnie ustawić prędkość na 0
+          setSpeed(0);
+        }
+      },
+      (error) => console.error("❌ Błąd GPS:", error.message),
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
 
-      return () => navigator.geolocation.clearWatch(watchId);
-    }
-  }, []);
+    return () => navigator.geolocation.clearWatch(watchId);
+  }
+}, []);
 
   return (
     <div>
