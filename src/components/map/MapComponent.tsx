@@ -156,15 +156,15 @@ const MapComponent = () => {
             )}
             <MapUpdater position={[userPosition.lat, userPosition.lon]} />
           </MapContainer>
-          <div className="flex">
+          <div className="flex m-4 w-full justify-between">
             <div>
               <p className="text-center font-bold text-xl">
-                🚗 Prędkość: {speed.toFixed(2)} km/h
+              Prędkość: {speed.toFixed(2)} km/h
               </p>
             </div>
             <div>
               <p className="text-center font-bold text-xl">
-                🛣️ Przebyta odległość: {(distance / 1000).toFixed(2)} km
+                Przebyta odległość: {(distance / 1000).toFixed(2)} km
               </p>
             </div>
           </div>
