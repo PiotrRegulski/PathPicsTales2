@@ -26,9 +26,9 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const MIN_DISTANCE = 5;
+const MIN_DISTANCE = 10;
 const MIN_SPEED = 3;
-const MAX_ACCURACY = 25;
+const MAX_ACCURACY = 30;
 
 function getDistanceFromLatLonInMeters(
   lat1: number,
