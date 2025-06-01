@@ -26,9 +26,9 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const MIN_DISTANCE = 10;
+const MIN_DISTANCE = 5;
 const MIN_SPEED = 3;
-const MAX_ACCURACY = 30;
+const MAX_ACCURACY = 25;
 
 function getDistanceFromLatLonInMeters(
   lat1: number,
@@ -66,23 +66,34 @@ const MapComponent = () => {
   const [autoCenter, setAutoCenter] = useState<boolean>(true);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
-  const [isActiveTracking, setIsActiveTracking] = useState<boolean>(false);
 
-  // GPS obsługa
+  // Ustawiamy pozycję użytkownika tylko raz na starcie
   useEffect(() => {
     if ("geolocation" in navigator) {
-      const watchId = navigator.geolocation.watchPosition(
+      navigator.geolocation.getCurrentPosition(
         (position) => {
-          setGpsError(null);
-
-          // Ustaw userPosition zawsze na starcie
           setUserPosition({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
           });
+        },
+        (error) => {
+          setGpsError(error.message);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    }
+  }, []);
 
-          // Jeśli nie kliknięto Start, nie śledź trasy
-          if (!isTracking) return;
+  // Aktualizujemy trasę, prędkość itd. tylko po kliknięciu Start
+  useEffect(() => {
+    if (!isTracking) return;
+
+    let watchId: number;
+    if ("geolocation" in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setGpsError(null);
 
           if (position.coords.accuracy <= MAX_ACCURACY) {
             const newPosition = {
@@ -90,41 +101,41 @@ const MapComponent = () => {
               lon: position.coords.longitude,
             };
 
+            setUserPosition(newPosition);
+
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
-            setSpeed(newSpeed);
+            if (newSpeed >= MIN_SPEED) {
+              setSpeed(newSpeed);
 
-            // Rozpocznij aktywne śledzenie tylko jeśli prędkość przekroczy MIN_SPEED
-            if (!isActiveTracking && newSpeed >= MIN_SPEED) {
-              setIsActiveTracking(true);
-              setStartTime(Date.now());
-              setTrack([newPosition]);
-              setDistance(0);
-              setTravelTime(0);
-              setPausedTime(0);
-              return;
-            }
-
-            // Jeśli aktywne śledzenie trwa
-            if (isActiveTracking && newSpeed >= MIN_SPEED) {
-              setTrack((prevTrack) => {
-                if (!prevTrack.length) {
-                  return [newPosition];
-                }
-                const lastPosition = prevTrack[prevTrack.length - 1];
-                const dist = getDistanceFromLatLonInMeters(
-                  lastPosition.lat,
-                  lastPosition.lon,
-                  newPosition.lat,
-                  newPosition.lon
-                );
-                if (dist >= MIN_DISTANCE) {
-                  setDistance((prevDistance) => prevDistance + dist);
-                  return [...prevTrack, newPosition];
-                }
-                return prevTrack;
-              });
+              if (!startTime) {
+                setStartTime(Date.now());
+                setPausedTime(0);
+                setTravelTime(0);
+                setTrack([newPosition]);
+                setDistance(0);
+              } else {
+                setTrack((prevTrack) => {
+                  if (prevTrack.length === 0) {
+                    return [newPosition];
+                  }
+                  const lastPosition = prevTrack[prevTrack.length - 1];
+                  const dist = getDistanceFromLatLonInMeters(
+                    lastPosition.lat,
+                    lastPosition.lon,
+                    newPosition.lat,
+                    newPosition.lon
+                  );
+                  if (dist >= MIN_DISTANCE) {
+                    setDistance((prevDistance) => prevDistance + dist);
+                    return [...prevTrack, newPosition];
+                  }
+                  return prevTrack;
+                });
+              }
+            } else {
+              setSpeed(0);
             }
           } else {
             setGpsError(
@@ -136,33 +147,33 @@ const MapComponent = () => {
         },
         (error) => {
           setGpsError(error.message);
-          console.error("❌ Błąd GPS:", error.message);
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
-
-      return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [isTracking, isActiveTracking]);
 
-  // Aktualizacja czasu podróży tylko gdy aktywne śledzenie
+    return () => {
+      if (watchId && "geolocation" in navigator) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+     
+  }, [isTracking, startTime]);
+
+  // Aktualizacja czasu podróży tylko gdy isTracking i startTime
   useEffect(() => {
-    if (!startTime || !isActiveTracking) return;
+    if (!isTracking || !startTime) return;
 
     const interval = setInterval(() => {
-      setTravelTime(
-        pausedTime + Math.floor((Date.now() - startTime) / 1000)
-      );
+      setTravelTime(pausedTime + Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [startTime, isActiveTracking, pausedTime]);
+  }, [isTracking, startTime, pausedTime]);
 
-  // Obsługa przycisków
   const handleStartPause = () => {
     if (isTracking) {
       setIsTracking(false);
-      setIsActiveTracking(false);
       setSpeed(0);
       if (startTime) {
         setPausedTime(
@@ -172,9 +183,9 @@ const MapComponent = () => {
       }
     } else {
       setIsTracking(true);
-      setIsActiveTracking(false);
       setTrack([]);
       setDistance(0);
+      setSpeed(0);
       setTravelTime(0);
       setPausedTime(0);
       setStartTime(null);
@@ -183,7 +194,6 @@ const MapComponent = () => {
 
   const handleReset = () => {
     setIsTracking(false);
-    setIsActiveTracking(false);
     setTrack([]);
     setDistance(0);
     setSpeed(0);
