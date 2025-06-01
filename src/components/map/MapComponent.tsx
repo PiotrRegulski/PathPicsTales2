@@ -11,7 +11,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
 
-// Definiowanie typu dla pozycji użytkownika
+// Typ pozycji użytkownika
 type UserPosition = {
   lat: number;
   lon: number;
@@ -27,10 +27,7 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-const MIN_DISTANCE = 15;
-const MIN_SPEED = 3;
-const MAX_ACCURACY = 25;
-
+// Funkcja do obliczania odległości między dwoma punktami GPS (Haversine formula)
 function getDistanceFromLatLonInMeters(
   lat1: number,
   lon1: number,
@@ -50,6 +47,7 @@ function getDistanceFromLatLonInMeters(
   return R * c;
 }
 
+// Formatowanie czasu w mm:ss
 function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -57,6 +55,11 @@ function formatTime(seconds: number) {
 }
 
 const MapComponent = () => {
+  // Parametry testowe jako stan
+  const [minDistance, setMinDistance] = useState(5);
+  const [minSpeed, setMinSpeed] = useState(3);
+  const [maxAccuracy, setMaxAccuracy] = useState(25);
+
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
@@ -75,7 +78,7 @@ const MapComponent = () => {
         (position) => {
           setGpsError(null);
 
-          // Ustawiamy userPosition ZAWSZE
+          // userPosition zawsze aktualizowane
           setUserPosition({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
@@ -84,7 +87,7 @@ const MapComponent = () => {
           // Dalej śledzimy trasę tylko jeśli tracking jest aktywny
           if (!isTracking) return;
 
-          if (position.coords.accuracy <= MAX_ACCURACY) {
+          if (position.coords.accuracy <= maxAccuracy) {
             const newPosition = {
               lat: position.coords.latitude,
               lon: position.coords.longitude,
@@ -101,7 +104,7 @@ const MapComponent = () => {
                 newPosition.lat,
                 newPosition.lon
               );
-              if (dist >= MIN_DISTANCE) {
+              if (dist >= minDistance) {
                 setDistance((prevDistance) => prevDistance + dist);
                 return [...prevTrack, newPosition];
               }
@@ -110,9 +113,9 @@ const MapComponent = () => {
 
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0;
-            setSpeed(newSpeed >= MIN_SPEED ? newSpeed : 0);
+            setSpeed(newSpeed >= minSpeed ? newSpeed : 0);
 
-            if (newSpeed >= MIN_SPEED && !startTime) {
+            if (newSpeed >= minSpeed && !startTime) {
               setStartTime(Date.now());
             }
           } else {
@@ -132,7 +135,7 @@ const MapComponent = () => {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [isTracking, startTime]);
+  }, [isTracking, startTime, minDistance, minSpeed, maxAccuracy]);
 
   // Aktualizacja czasu podróży co sekundę TYLKO gdy isTracking
   useEffect(() => {
@@ -179,6 +182,46 @@ const MapComponent = () => {
 
   return (
     <div>
+      {/* Panel ustawień testowych */}
+      <div className="flex flex-wrap gap-4 justify-center items-center my-4 bg-gray-50 p-4 rounded-lg shadow">
+        <label className="flex items-center gap-2">
+          Min. odległość (m):
+          <input
+            type="number"
+            min={1}
+            max={100}
+            step={1}
+            value={minDistance}
+            onChange={e => setMinDistance(Number(e.target.value))}
+            className="border rounded p-1 w-16"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          Min. prędkość (km/h):
+          <input
+            type="number"
+            min={0}
+            max={30}
+            step={0.1}
+            value={minSpeed}
+            onChange={e => setMinSpeed(Number(e.target.value))}
+            className="border rounded p-1 w-16"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          Max. dokładność (m):
+          <input
+            type="number"
+            min={1}
+            max={100}
+            step={1}
+            value={maxAccuracy}
+            onChange={e => setMaxAccuracy(Number(e.target.value))}
+            className="border rounded p-1 w-16"
+          />
+        </label>
+      </div>
+
       {userPosition ? (
         <>
           <MapContainer
