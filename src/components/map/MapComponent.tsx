@@ -20,21 +20,55 @@ const markerIcon: L.Icon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// 🔹 Minimalna odległość w metrach, poniżej której ignorujemy zmianę pozycji
+const MIN_DISTANCE = 5;
+// 🔹 Minimalna prędkość w km/h do aktualizacji trasy i prędkości
+const MIN_SPEED = 3;
+// 🔹 Maksymalna dopuszczalna dokładność GPS w metrach
+const MAX_ACCURACY = 25;
+
+// 🔹 Funkcja do obliczania odległości między dwoma punktami GPS (Haversine formula)
+function getDistanceFromLatLonInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371000; // promień Ziemi w metrach
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
-  const [speed, setSpeed] = useState<number>(0); // 🔹 Prędkość użytkownika
-const MIN_SPEED = 3; // km/h
- const MAX_ACCURACY = 25; // metry - maksymalna dopuszczalna dokładność
+  const [speed, setSpeed] = useState<number>(0);
 
- useEffect(() => {
+  useEffect(() => {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          // Filtruj pozycje o zbyt niskiej dokładności
           if (position.coords.accuracy <= MAX_ACCURACY) {
             const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
-            setUserPosition(newPosition); // ustawiaj zawsze pozycję, jeśli dokładność jest OK
+
+            setUserPosition((prevPosition) => {
+              if (prevPosition) {
+                const distance = getDistanceFromLatLonInMeters(
+                  prevPosition.lat,
+                  prevPosition.lon,
+                  newPosition.lat,
+                  newPosition.lon
+                );
+                if (distance < MIN_DISTANCE) {
+                  // Zmiana pozycji zbyt mała, ignoruj
+                  return prevPosition;
+                }
+              }
+              return newPosition;
+            });
 
             const newSpeed = position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
@@ -43,12 +77,16 @@ const MIN_SPEED = 3; // km/h
 
               setTrack((prevTrack) => {
                 const lastPosition = prevTrack[prevTrack.length - 1];
-                // Dodaj nowy punkt, jeśli różnica w lat lub lon jest większa niż 0.00005
-                if (
-                  !lastPosition ||
-                  Math.abs(lastPosition.lat - newPosition.lat) > 0.00005 ||
-                  Math.abs(lastPosition.lon - newPosition.lon) > 0.00005
-                ) {
+                if (!lastPosition) {
+                  return [newPosition];
+                }
+                const distance = getDistanceFromLatLonInMeters(
+                  lastPosition.lat,
+                  lastPosition.lon,
+                  newPosition.lat,
+                  newPosition.lon
+                );
+                if (distance >= MIN_DISTANCE) {
                   return [...prevTrack, newPosition];
                 }
                 return prevTrack;
@@ -68,21 +106,25 @@ const MIN_SPEED = 3; // km/h
     }
   }, []);
 
-
   return (
     <div>
       {userPosition ? (
         <>
           <p className="text-center font-bold text-xl">🚗 Prędkość: {speed.toFixed(2)} km/h</p>
-          <MapContainer center={[userPosition.lat, userPosition.lon]} zoom={18} className="h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950 mx-4">
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+          <MapContainer
+            center={[userPosition.lat, userPosition.lon]}
+            zoom={18}
+            className="h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950 mx-4"
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
 
-            {/* 🔹 Marker użytkownika */}
             <Marker position={[userPosition.lat, userPosition.lon]} icon={markerIcon}>
               <Popup>📍 Twoja aktualna lokalizacja</Popup>
             </Marker>
 
-            {/* 🔹 Rysowanie trasy */}
             {track.length > 1 && <Polyline positions={track.map((pos) => [pos.lat, pos.lon])} color="blue" />}
           </MapContainer>
         </>
