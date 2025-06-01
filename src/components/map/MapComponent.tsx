@@ -1,8 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import MapUpdater from "./MapUpdater";
 
 // 🔹 Definiowanie typu dla pozycji użytkownika
 type UserPosition = {
@@ -28,7 +36,12 @@ const MIN_SPEED = 3;
 const MAX_ACCURACY = 25;
 
 // 🔹 Funkcja do obliczania odległości między dwoma punktami GPS (Haversine formula)
-function getDistanceFromLatLonInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+function getDistanceFromLatLonInMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
   const R = 6371000; // promień Ziemi w metrach
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -46,13 +59,17 @@ const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
+  const [distance, setDistance] = useState<number>(0); // w metrach
 
   useEffect(() => {
     if ("geolocation" in navigator) {
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           if (position.coords.accuracy <= MAX_ACCURACY) {
-            const newPosition = { lat: position.coords.latitude, lon: position.coords.longitude };
+            const newPosition = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+            };
 
             setUserPosition((prevPosition) => {
               if (prevPosition) {
@@ -70,7 +87,8 @@ const MapComponent = () => {
               return newPosition;
             });
 
-            const newSpeed = position.coords.speed != null ? position.coords.speed * 3.6 : 0;
+            const newSpeed =
+              position.coords.speed != null ? position.coords.speed * 3.6 : 0;
 
             if (newSpeed >= MIN_SPEED) {
               setSpeed(newSpeed);
@@ -87,6 +105,7 @@ const MapComponent = () => {
                   newPosition.lon
                 );
                 if (distance >= MIN_DISTANCE) {
+                  setDistance((prevDistance) => prevDistance + distance);
                   return [...prevTrack, newPosition];
                 }
                 return prevTrack;
@@ -95,7 +114,9 @@ const MapComponent = () => {
               setSpeed(0);
             }
           } else {
-            console.warn(`Pomijam pozycję o niskiej dokładności: ${position.coords.accuracy} m`);
+            console.warn(
+              `Pomijam pozycję o niskiej dokładności: ${position.coords.accuracy} m`
+            );
           }
         },
         (error) => console.error("❌ Błąd GPS:", error.message),
@@ -110,7 +131,6 @@ const MapComponent = () => {
     <div>
       {userPosition ? (
         <>
-          <p className="text-center font-bold text-xl">🚗 Prędkość: {speed.toFixed(2)} km/h</p>
           <MapContainer
             center={[userPosition.lat, userPosition.lon]}
             zoom={18}
@@ -121,12 +141,33 @@ const MapComponent = () => {
               attribution="&copy; OpenStreetMap contributors"
             />
 
-            <Marker position={[userPosition.lat, userPosition.lon]} icon={markerIcon}>
+            <Marker
+              position={[userPosition.lat, userPosition.lon]}
+              icon={markerIcon}
+            >
               <Popup>📍 Twoja aktualna lokalizacja</Popup>
             </Marker>
 
-            {track.length > 1 && <Polyline positions={track.map((pos) => [pos.lat, pos.lon])} color="blue" />}
+            {track.length > 1 && (
+              <Polyline
+                positions={track.map((pos) => [pos.lat, pos.lon])}
+                color="blue"
+              />
+            )}
+            <MapUpdater position={[userPosition.lat, userPosition.lon]} />
           </MapContainer>
+          <div className="flex">
+            <div>
+              <p className="text-center font-bold text-xl">
+                🚗 Prędkość: {speed.toFixed(2)} km/h
+              </p>
+            </div>
+            <div>
+              <p className="text-center font-bold text-xl">
+                🛣️ Przebyta odległość: {(distance / 1000).toFixed(2)} km
+              </p>
+            </div>
+          </div>
         </>
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>
