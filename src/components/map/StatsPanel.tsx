@@ -9,7 +9,7 @@ interface StatsPanelProps {
 
 export default function StatsPanel({ speed, distance, travelTime, elapsedTime }: StatsPanelProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 m-2 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+    <div className="grid grid-cols-2 gap-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
       <div className="flex flex-col items-center bg-lime-100 p-4 rounded-lg shadow-sm w-48">
         <p className="text-lg font-semibold text-lime-800">🚗 Prędkość</p>
         <p className="text-2xl font-bold text-lime-900">
@@ -22,13 +22,13 @@ export default function StatsPanel({ speed, distance, travelTime, elapsedTime }:
           {(distance / 1000).toFixed(2)} km
         </p>
       </div>
-      <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48 col-span-2 sm:col-span-1">
+      <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48 col-span-2 ">
         <p className="text-lg font-semibold text-yellow-800">⏱️ Czas jazdy </p>
         <p className="text-2xl font-bold text-yellow-900">
           {formatTime(travelTime)}
         </p>
       </div>
-       <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48 col-span-2 sm:col-span-1">
+       <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48 col-span-2">
         <p className="text-lg font-semibold text-yellow-800">⏱️ Czas podróży </p>
        <p className="text-2xl font-bold text-gray-900">{formatTime(elapsedTime)}</p>
       </div>

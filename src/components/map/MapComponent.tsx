@@ -4,7 +4,7 @@ import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
-import { getDistanceFromLatLonInMeters } from "./Utilis"
+import { getDistanceFromLatLonInMeters } from "./Utilis";
 
 type UserPosition = {
   lat: number;
@@ -27,8 +27,8 @@ const MapComponent = () => {
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState<number>(0); // nowy czas od startu
-const [elapsedStart, setElapsedStart] = useState<number | null>(null); // znacznik czasu początku
-const [pausedElapsed, setPausedElapsed] = useState<number>(0);
+  const [elapsedStart, setElapsedStart] = useState<number | null>(null); // znacznik czasu początku
+  const [pausedElapsed, setPausedElapsed] = useState<number>(0);
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -119,14 +119,16 @@ const [pausedElapsed, setPausedElapsed] = useState<number>(0);
     };
   }, [isTracking, startTime]);
   useEffect(() => {
-  if (!isTracking || !elapsedStart) return;
+    if (!isTracking || !elapsedStart) return;
 
-  const interval = setInterval(() => {
-    setElapsedTime(pausedElapsed + Math.floor((Date.now() - elapsedStart) / 1000));
-  }, 1000);
+    const interval = setInterval(() => {
+      setElapsedTime(
+        pausedElapsed + Math.floor((Date.now() - elapsedStart) / 1000)
+      );
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, [isTracking, elapsedStart, pausedElapsed]);
+    return () => clearInterval(interval);
+  }, [isTracking, elapsedStart, pausedElapsed]);
 
   useEffect(() => {
     if (!isTracking || !startTime) return;
@@ -136,43 +138,35 @@ const [pausedElapsed, setPausedElapsed] = useState<number>(0);
     return () => clearInterval(interval);
   }, [isTracking, startTime, pausedTime]);
 
-  const handleStartPause = () => {
-    if (isTracking) {
-      setIsTracking(false);
-      setSpeed(0);
-      if (startTime) {
-        setPausedTime(
-          (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
-        );
-        setStartTime(null);
-        if (elapsedStart) {
-      setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
-      setElapsedStart(null);
-      
-      }
-    } else {
+ const handleStartPause = () => {
+  if (isTracking) {
+    setIsTracking(false);
+    setSpeed(0);
+    if (startTime) {
+      setPausedTime(
+        (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
+      );
+      setStartTime(null);
+    }
+  } else {
     setIsTracking(true);
     if (!startTime) setStartTime(Date.now());
-    if (!elapsedStart) setElapsedStart(Date.now());
-    }
-     
-    }
-  };
-
-
- const handleReset = () => {
-  setIsTracking(false);
-  setTrack([]);
-  setDistance(0);
-  setSpeed(0);
-  setTravelTime(0);
-  setStartTime(null);
-  setPausedTime(0);
-  setElapsedTime(0);
-  setElapsedStart(null);
-  setPausedElapsed(0);
-  setGpsError(null);
+  }
 };
+
+  const handleReset = () => {
+    setIsTracking(false);
+    setTrack([]);
+    setDistance(0);
+    setSpeed(0);
+    setTravelTime(0);
+    setStartTime(null);
+    setPausedTime(0);
+    setElapsedTime(0);
+    setElapsedStart(null);
+    setPausedElapsed(0);
+    setGpsError(null);
+  };
 
   return (
     <div>
@@ -193,7 +187,12 @@ const [pausedElapsed, setPausedElapsed] = useState<number>(0);
             distance={distance}
             travelTime={travelTime}
           />
-          <StatsPanel speed={speed} distance={distance} travelTime={travelTime} elapsedTime={elapsedTime} />
+          <StatsPanel
+            speed={speed}
+            distance={distance}
+            travelTime={travelTime}
+            elapsedTime={elapsedTime}
+          />
           <GpsError error={gpsError} />
         </>
       ) : (
