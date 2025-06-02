@@ -36,7 +36,15 @@ export default function ControlPanel({
         {isTracking ? "Pauza" : "Start"}
       </button>
       <button
-        onClick={onReset}
+        onClick={() => {
+          if (
+            window.confirm(
+              "Czy na pewno chcesz zresetować trasę? Wszystkie dane zostaną utracone."
+            )
+          ) {
+            onReset();
+          }
+        }}
         className="px-4 py-2 bg-red-500 rounded text-white hover:bg-red-600"
       >
         Reset
@@ -47,7 +55,12 @@ export default function ControlPanel({
       >
         {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
       </button>
-      <TrackExporter track={track} distance={distance} travelTime={travelTime} elapsedTime={elapsedTime} />
+      <TrackExporter
+        track={track}
+        distance={distance}
+        travelTime={travelTime}
+        elapsedTime={elapsedTime}
+      />
     </div>
   );
 }
