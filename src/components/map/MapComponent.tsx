@@ -186,6 +186,7 @@ const MapComponent = () => {
             track={track}
             distance={distance}
             travelTime={travelTime}
+            elapsedTime={elapsedTime} 
           />
           <StatsPanel
             speed={speed}

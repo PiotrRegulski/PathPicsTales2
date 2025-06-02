@@ -9,6 +9,7 @@ interface ControlPanelProps {
   track: { lat: number; lon: number }[];
   distance: number;
   travelTime: number;
+  elapsedTime: number;
 }
 
 export default function ControlPanel({
@@ -20,6 +21,7 @@ export default function ControlPanel({
   track,
   distance,
   travelTime,
+  elapsedTime,
 }: ControlPanelProps) {
   return (
     <div className="flex justify-center gap-4 my-4 flex-wrap">
@@ -45,7 +47,7 @@ export default function ControlPanel({
       >
         {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
       </button>
-      <TrackExporter track={track} distance={distance} travelTime={travelTime} />
+      <TrackExporter track={track} distance={distance} travelTime={travelTime} elapsedTime={elapsedTime} />
     </div>
   );
 }

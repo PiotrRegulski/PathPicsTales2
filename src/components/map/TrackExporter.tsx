@@ -8,6 +8,7 @@ type TrackExporterProps = {
   track: UserPosition[];
   distance: number;
   travelTime: number;
+  elapsedTime: number;
 };
 
 function formatTime(seconds: number) {
@@ -16,11 +17,11 @@ function formatTime(seconds: number) {
   return `${mins}m ${secs}s`;
 }
 
-const TrackExporter = ({ track, distance, travelTime }: TrackExporterProps) => {
+const TrackExporter = ({ track, distance, travelTime,elapsedTime }: TrackExporterProps) => {
   const exportTrackToCSV = () => {
     const header = "lat,lon\n";
     const trackRows = track.map(p => `${p.lat},${p.lon}`).join("\n");
-    const summary = `\n\nDystans (km):,${(distance / 1000).toFixed(2)}\nCzas:,${formatTime(travelTime)}`;
+    const summary = `\n\nDystans (km):,${(distance / 1000).toFixed(2)}\nCzas:,${formatTime(travelTime)}\nCzas podróży:,${formatTime(elapsedTime)}`;
     const csv = header + trackRows + summary;
 
     const blob = new Blob([csv], { type: "text/csv" });
