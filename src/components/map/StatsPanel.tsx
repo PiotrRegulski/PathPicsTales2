@@ -23,13 +23,13 @@ export default function StatsPanel({ speed, distance, travelTime, elapsedTime }:
         </p>
       </div>
       <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48  ">
-        <p className="text-lg font-semibold text-yellow-800">⏱️ Czas jazdy </p>
+        <p className="text-lg font-semibold text-yellow-800">⏱️Czas podróży </p>
         <p className="text-2xl font-bold text-yellow-900">
           {formatTime(travelTime)}
         </p>
       </div>
        <div className="flex flex-col items-center bg-yellow-100 p-2 rounded-lg shadow-sm w-48 ">
-        <p className="text-lg font-semibold text-yellow-800">⏱️ Czas podróży </p>
+        <p className="text-lg font-semibold text-yellow-800">⏱️Czas jazdy </p>
        <p className="text-2xl font-bold text-gray-900">{formatTime(elapsedTime)}</p>
       </div>
     </div>
