@@ -10,6 +10,7 @@ interface ControlPanelProps {
   distance: number;
   travelTime: number;
   elapsedTime: number;
+    trackName: string;
 }
 
 export default function ControlPanel({
@@ -22,11 +23,13 @@ export default function ControlPanel({
   distance,
   travelTime,
   elapsedTime,
+  trackName
 }: ControlPanelProps) {
   return (
     <div className="flex justify-center gap-4 my-4 flex-wrap">
       <button
         onClick={onStartPause}
+        disabled={!trackName.trim()}
         className={`px-4 py-2 rounded text-white ${
           isTracking
             ? "bg-yellow-500 hover:bg-yellow-600"
@@ -60,6 +63,8 @@ export default function ControlPanel({
         distance={distance}
         travelTime={travelTime}
         elapsedTime={elapsedTime}
+        trackName={trackName}
+
       />
     </div>
   );

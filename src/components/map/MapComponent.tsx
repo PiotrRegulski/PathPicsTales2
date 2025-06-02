@@ -5,7 +5,7 @@ import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
-
+import SetTrackName from "./SetTrackName";
 type UserPosition = {
   lat: number;
   lon: number;
@@ -29,6 +29,7 @@ const MapComponent = () => {
   const [elapsedTime, setElapsedTime] = useState<number>(0); // nowy czas od startu
   const [elapsedStart, setElapsedStart] = useState<number | null>(null); // znacznik czasu początku
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
+  const [trackName, setTrackName] = useState("");
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -172,6 +173,7 @@ const MapComponent = () => {
     <div>
       {userPosition ? (
         <>
+          <SetTrackName trackName={trackName} setTrackName={setTrackName} disabled={isTracking} />
           <MapView
             userPosition={userPosition}
             track={track}
@@ -187,6 +189,7 @@ const MapComponent = () => {
             distance={distance}
             travelTime={travelTime}
             elapsedTime={elapsedTime} 
+            trackName={trackName}
           />
           <StatsPanel
             speed={speed}
