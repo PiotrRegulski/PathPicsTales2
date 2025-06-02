@@ -30,7 +30,7 @@ const TrackExporter = ({ track, distance, travelTime,elapsedTime,trackName }: Tr
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "trasa.csv";
+    a.download = `${trackName}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
