@@ -26,7 +26,7 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
   };
 
   return (
-    <div className="photo-input flex gap-2 items-center">
+    <div className="photo-input flex gap-2 items-center my-12">
       <input
         type="file"
         accept="image/*"
