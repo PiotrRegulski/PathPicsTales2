@@ -189,24 +189,28 @@ const MapComponent = () => {
     setPhotos((prev) => [...prev, newPhoto]);
   };
   // Obsługa start/pauza śledzenia
-  const handleStartPause = () => {
-    if (isTracking) {
-      setIsTracking(false);
-      setSpeed(0);
-      if (startTime) {
-        setPausedTime((prev) => prev + Math.floor((Date.now() - startTime) / 1000));
-        setStartTime(null);
-      }
-      if (elapsedStart) {
-        setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
-        setElapsedStart(null);
-      }
-    } else {
-      setIsTracking(true);
-      if (!startTime) setStartTime(Date.now());
-      if (!elapsedStart && speed >= MIN_SPEED) setElapsedStart(Date.now());
+const handleStartPause = () => {
+  if (isTracking) {
+    setIsTracking(false);
+    setSpeed(0);
+    if (startTime) {
+      setPausedTime((prev) => prev + Math.floor((Date.now() - startTime) / 1000));
+      setStartTime(null);
     }
-  };
+    if (elapsedStart) {
+      setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
+      setElapsedStart(null);
+    }
+  } else {
+    setIsTracking(true);
+    if (!startTime) setStartTime(Date.now());
+    // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta i masz pozycję użytkownika
+    if (track.length === 0 && userPosition) {
+      setTrack([userPosition]);
+    }
+    // elapsedStart nadal ustawiamy dopiero po przekroczeniu MIN_SPEED
+  }
+};
 
   // Reset wszystkich danych
   const handleReset = () => {
