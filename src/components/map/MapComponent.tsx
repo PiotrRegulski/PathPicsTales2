@@ -6,12 +6,21 @@ import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
 import SetTrackName from "./SetTrackName";
+import PhotoInput from "./camera/PhotoInput";
+import SaveTrackButton from "./camera/SaveTrackButton";
+import PhotoList from "./camera/PhotoList";
 
 type UserPosition = {
   lat: number;
   lon: number;
 };
-
+type Photo = {
+  id: string;
+  imageDataUrl: string;
+  description: string;
+  position: UserPosition;
+  timestamp: number;
+};
 const MIN_DISTANCE = 5; // minimalna odległość w metrach
 const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
 const MAX_ACCURACY = 25; // maksymalna akceptowalna dokładność GPS w metrach
@@ -34,7 +43,7 @@ const MapComponent = () => {
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
 
   const [trackName, setTrackName] = useState("");
-
+ const [photos, setPhotos] = useState<Photo[]>([]);
   // Pobranie początkowej pozycji
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -167,6 +176,18 @@ const MapComponent = () => {
     return () => clearInterval(interval);
   }, [isTracking, startTime, pausedTime]);
 
+   // Dodaj obsługę dodawania zdjęć:
+  const handleAddPhoto = (imageDataUrl: string, description: string) => {
+    if (!userPosition) return;
+    const newPhoto: Photo = {
+      id: crypto.randomUUID(),
+      imageDataUrl,
+      description,
+      position: userPosition,
+      timestamp: Date.now(),
+    };
+    setPhotos((prev) => [...prev, newPhoto]);
+  };
   // Obsługa start/pauza śledzenia
   const handleStartPause = () => {
     if (isTracking) {
@@ -225,6 +246,21 @@ const MapComponent = () => {
             distance={distance}
             travelTime={travelTime}
             elapsedTime={elapsedTime}
+          />
+           <PhotoInput isTracking={isTracking} userPosition={userPosition} onAddPhoto={handleAddPhoto} />
+          <PhotoList photos={photos} />
+          <SaveTrackButton
+            trackName={trackName}
+            track={track}
+            distance={distance}
+            travelTime={travelTime}
+            elapsedTime={elapsedTime}
+            photos={photos}
+            onReset={() => {
+              // resetuj wszystko, w tym zdjęcia
+              setPhotos([]);
+              // inne resety jak w handleReset
+            }}
           />
           <GpsError error={gpsError} />
         </>
