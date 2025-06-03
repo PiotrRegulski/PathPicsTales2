@@ -241,13 +241,14 @@ const MapComponent = () => {
             elapsedTime={elapsedTime}
             trackName={trackName}
           />
+            <PhotoInput isTracking={isTracking} userPosition={userPosition} onAddPhoto={handleAddPhoto} />
           <StatsPanel
             speed={speed}
             distance={distance}
             travelTime={travelTime}
             elapsedTime={elapsedTime}
           />
-           <PhotoInput isTracking={isTracking} userPosition={userPosition} onAddPhoto={handleAddPhoto} />
+         
           <PhotoList photos={photos} />
           <SaveTrackButton
             trackName={trackName}

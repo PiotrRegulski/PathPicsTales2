@@ -9,7 +9,7 @@ interface StatsPanelProps {
 
 export default function StatsPanel({ speed, distance, travelTime, elapsedTime }: StatsPanelProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 p-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+    <div className="grid grid-cols-2 gap-4 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
       <div className="flex flex-col items-center bg-lime-100 p-4 rounded-lg shadow-sm w-48">
         <p className="text-lg font-semibold text-lime-800">🚗 Prędkość</p>
         <p className="text-2xl font-bold text-lime-900">
