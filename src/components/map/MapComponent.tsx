@@ -6,14 +6,15 @@ import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
 import SetTrackName from "./SetTrackName";
+
 type UserPosition = {
   lat: number;
   lon: number;
 };
 
-const MIN_DISTANCE = 5;
-const MIN_SPEED = 3;
-const MAX_ACCURACY = 25;
+const MIN_DISTANCE = 5; // minimalna odległość w metrach
+const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
+const MAX_ACCURACY = 25; // maksymalna akceptowalna dokładność GPS w metrach
 
 const MapComponent = () => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
@@ -26,10 +27,15 @@ const MapComponent = () => {
   const [autoCenter, setAutoCenter] = useState<boolean>(true);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<number>(0); // nowy czas od startu
-  const [elapsedStart, setElapsedStart] = useState<number | null>(null); // znacznik czasu początku
+
+  // Stany dla elapsedTime liczonego tylko podczas ruchu
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+  const [elapsedStart, setElapsedStart] = useState<number | null>(null);
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
+
   const [trackName, setTrackName] = useState("");
+
+  // Pobranie początkowej pozycji
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -47,6 +53,7 @@ const MapComponent = () => {
     }
   }, []);
 
+  // Obsługa śledzenia pozycji podczas aktywnego tracking'u
   useEffect(() => {
     if (!isTracking) return;
     let watchId: number;
@@ -60,7 +67,8 @@ const MapComponent = () => {
               lon: position.coords.longitude,
             };
             const newSpeed =
-              position.coords.speed != null ? position.coords.speed * 3.6 : 0;
+              position.coords.speed != null ? position.coords.speed * 3.6 : 0; // m/s -> km/h
+
             if (newSpeed >= MIN_SPEED) {
               setUserPosition((prevPosition) => {
                 if (!prevPosition) return newPosition;
@@ -75,10 +83,13 @@ const MapComponent = () => {
                 }
                 return newPosition;
               });
+
               if (!startTime) {
                 setStartTime(Date.now());
               }
+
               setSpeed(newSpeed);
+
               setTrack((prevTrack) => {
                 if (prevTrack.length === 0) {
                   return [newPosition];
@@ -119,18 +130,35 @@ const MapComponent = () => {
       }
     };
   }, [isTracking, startTime]);
+
+  // Zarządzanie elapsedTime - liczy tylko podczas ruchu z prędkością >= MIN_SPEED
   useEffect(() => {
-    if (!isTracking || !elapsedStart) return;
+    if (!isTracking) return;
+
+    if (speed >= MIN_SPEED) {
+      if (!elapsedStart) {
+        setElapsedStart(Date.now());
+      }
+    } else {
+      if (elapsedStart) {
+        setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
+        setElapsedStart(null);
+      }
+    }
+  }, [speed, isTracking, elapsedStart]);
+
+  // Aktualizacja elapsedTime co sekundę, tylko jeśli elapsedStart jest ustawione
+  useEffect(() => {
+    if (!elapsedStart) return;
 
     const interval = setInterval(() => {
-      setElapsedTime(
-        pausedElapsed + Math.floor((Date.now() - elapsedStart) / 1000)
-      );
+      setElapsedTime(pausedElapsed + Math.floor((Date.now() - elapsedStart) / 1000));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTracking, elapsedStart, pausedElapsed]);
+  }, [elapsedStart, pausedElapsed]);
 
+  // Aktualizacja travelTime (całkowity czas trwania śledzenia)
   useEffect(() => {
     if (!isTracking || !startTime) return;
     const interval = setInterval(() => {
@@ -139,22 +167,27 @@ const MapComponent = () => {
     return () => clearInterval(interval);
   }, [isTracking, startTime, pausedTime]);
 
- const handleStartPause = () => {
-  if (isTracking) {
-    setIsTracking(false);
-    setSpeed(0);
-    if (startTime) {
-      setPausedTime(
-        (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
-      );
-      setStartTime(null);
+  // Obsługa start/pauza śledzenia
+  const handleStartPause = () => {
+    if (isTracking) {
+      setIsTracking(false);
+      setSpeed(0);
+      if (startTime) {
+        setPausedTime((prev) => prev + Math.floor((Date.now() - startTime) / 1000));
+        setStartTime(null);
+      }
+      if (elapsedStart) {
+        setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
+        setElapsedStart(null);
+      }
+    } else {
+      setIsTracking(true);
+      if (!startTime) setStartTime(Date.now());
+      if (!elapsedStart && speed >= MIN_SPEED) setElapsedStart(Date.now());
     }
-  } else {
-    setIsTracking(true);
-    if (!startTime) setStartTime(Date.now());
-  }
-};
+  };
 
+  // Reset wszystkich danych
   const handleReset = () => {
     setIsTracking(false);
     setTrack([]);
@@ -174,11 +207,7 @@ const MapComponent = () => {
       {userPosition ? (
         <>
           <SetTrackName trackName={trackName} setTrackName={setTrackName} disabled={isTracking} />
-          <MapView
-            userPosition={userPosition}
-            track={track}
-            autoCenter={autoCenter}
-          />
+          <MapView userPosition={userPosition} track={track} autoCenter={autoCenter} />
           <ControlPanel
             isTracking={isTracking}
             onStartPause={handleStartPause}
@@ -188,7 +217,7 @@ const MapComponent = () => {
             track={track}
             distance={distance}
             travelTime={travelTime}
-            elapsedTime={elapsedTime} 
+            elapsedTime={elapsedTime}
             trackName={trackName}
           />
           <StatsPanel
