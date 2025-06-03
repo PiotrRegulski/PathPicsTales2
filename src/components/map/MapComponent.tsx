@@ -224,7 +224,7 @@ const MapComponent = () => {
   };
 
   return (
-    <div>
+    <div className="flex flex-col items-center p-4">
       {userPosition ? (
         <>
           <SetTrackName trackName={trackName} setTrackName={setTrackName} disabled={isTracking} />
