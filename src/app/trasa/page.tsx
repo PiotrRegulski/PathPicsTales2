@@ -1,20 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React from "react";
 
-// Typ propsów dla MapComponent
-type MapComponentProps = {
-  resume?: boolean;
-};
-
-// Dynamiczny import MapComponent, wyłączamy SSR
+// Dynamiczny import bez generyków i bez typów propsów tutaj
 const MapComponent = dynamic(
   () => import("@/components/map/MapComponent"),
-  { ssr: false, loading: () => <p>Ładowanie mapy...</p> }
+  { ssr: false }
 );
 
-// Typ dla searchParams zgodny z Next.js App Router
+// Typowanie searchParams zgodne z Next.js
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type MapPageProps = {
@@ -24,7 +18,6 @@ type MapPageProps = {
 export default function MapPage({ searchParams }: MapPageProps) {
   const resumeParam = searchParams.resume;
 
-  // Konwersja parametru resume na boolean
   const resume =
     typeof resumeParam === "string"
       ? resumeParam === "true"
