@@ -1,4 +1,4 @@
-import TrackExporter from "./TrackExporter";
+
 
 interface ControlPanelProps {
   isTracking: boolean;
@@ -19,10 +19,6 @@ export default function ControlPanel({
   onReset,
   autoCenter,
   setAutoCenter,
-  track,
-  distance,
-  travelTime,
-  elapsedTime,
   trackName
 }: ControlPanelProps) {
   return (
@@ -58,14 +54,7 @@ export default function ControlPanel({
       >
         {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
       </button>
-      <TrackExporter
-        track={track}
-        distance={distance}
-        travelTime={travelTime}
-        elapsedTime={elapsedTime}
-        trackName={trackName}
-
-      />
+    
     </div>
   );
 }

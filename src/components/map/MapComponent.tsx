@@ -9,6 +9,7 @@ import SetTrackName from "./SetTrackName";
 import PhotoInput from "./camera/PhotoInput";
 import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
+import TrackAutoSaver from "./TrackAutoSaver";
 
 type UserPosition = {
   lat: number;
@@ -262,6 +263,14 @@ const handleStartPause = () => {
     <div className="flex flex-col items-center p-4">
       {userPosition ? (
         <>
+          <TrackAutoSaver
+            track={track}
+            photos={photos}
+            distance={distance}
+            travelTime={travelTime}
+            elapsedTime={elapsedTime}
+            trackName={trackName}
+            isTracking={isTracking}/>
           <SetTrackName trackName={trackName} setTrackName={setTrackName} disabled={isTracking} />
           <MapView userPosition={userPosition} track={track} autoCenter={autoCenter} />
           <ControlPanel

@@ -1,4 +1,5 @@
-// TrackExporter.tsx
+// TrackExporter.tsx zapisywanie trasy do pliku CSV
+
 type UserPosition = {
   lat: number;
   lon: number;

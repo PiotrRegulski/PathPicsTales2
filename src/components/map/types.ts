@@ -11,3 +11,13 @@ export type Photo = {
   position: UserPosition;
   timestamp: number;
 };
+
+export type TrackAutoSaver = {
+  track: UserPosition[];
+  photos: Photo[];
+  distance: number;
+  travelTime: number;
+  elapsedTime: number;
+  trackName: string;
+  isTracking: boolean;
+};
