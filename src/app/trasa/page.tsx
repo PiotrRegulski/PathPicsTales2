@@ -2,28 +2,18 @@
 
 import dynamic from "next/dynamic";
 
-// Dynamiczny import bez generyków i bez typów propsów tutaj
-const MapComponent = dynamic(
-  () => import("@/components/map/MapComponent"),
-  { ssr: false }
-);
-
-// Typowanie searchParams zgodne z Next.js
-type SearchParams = Record<string, string | string[] | undefined>;
+const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
+  ssr: false,
+  loading: () => <p>Ładowanie mapy...</p>,
+});
 
 type MapPageProps = {
-  searchParams: SearchParams;
+  searchParams?: URLSearchParams;
 };
 
 export default function MapPage({ searchParams }: MapPageProps) {
-  const resumeParam = searchParams.resume;
-
-  const resume =
-    typeof resumeParam === "string"
-      ? resumeParam === "true"
-      : Array.isArray(resumeParam)
-      ? resumeParam.includes("true")
-      : false;
+  const resumeParam = searchParams?.get("resume");
+  const resume = resumeParam === "true";
 
   return (
     <div className="flex flex-col items-center w-full">
