@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { openDB } from "idb";
 import Link from "next/link";
