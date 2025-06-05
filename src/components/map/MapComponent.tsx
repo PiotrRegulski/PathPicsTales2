@@ -191,8 +191,10 @@ const MapComponent = () => {
   // Obsługa start/pauza śledzenia
 const handleStartPause = () => {
   if (isTracking) {
+    // Pauzujemy śledzenie
     setIsTracking(false);
     setSpeed(0);
+
     if (startTime) {
       setPausedTime((prev) => prev + Math.floor((Date.now() - startTime) / 1000));
       setStartTime(null);
@@ -202,15 +204,44 @@ const handleStartPause = () => {
       setElapsedStart(null);
     }
   } else {
-    setIsTracking(true);
-    if (!startTime) setStartTime(Date.now());
-    // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta i masz pozycję użytkownika
-    if (track.length === 0 && userPosition) {
-      setTrack([userPosition]);
+    // Wznawiamy śledzenie - najpierw pobieramy aktualną pozycję
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newPosition = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          };
+          setUserPosition(newPosition);
+
+          setIsTracking(true);
+          if (!startTime) setStartTime(Date.now());
+
+          // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta
+          if (track.length === 0) {
+            setTrack([newPosition]);
+          }
+        },
+        (error) => {
+          // Obsłuż błąd GPS, np. ustaw komunikat
+          setGpsError(error.message);
+          // Mimo błędu włącz śledzenie, jeśli chcesz
+          setIsTracking(true);
+          if (!startTime) setStartTime(Date.now());
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      // Jeśli geolokalizacja niedostępna, po prostu włącz śledzenie
+      setIsTracking(true);
+      if (!startTime) setStartTime(Date.now());
+      if (track.length === 0 && userPosition) {
+        setTrack([userPosition]);
+      }
     }
-    // elapsedStart nadal ustawiamy dopiero po przekroczeniu MIN_SPEED
   }
 };
+
 
   // Reset wszystkich danych
   const handleReset = () => {
