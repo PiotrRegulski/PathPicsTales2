@@ -25,7 +25,7 @@ export default function ContinueTrackButton() {
 
   return (
     <Link href="/trasa?resume=true">
-      <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+      <button className="px-6 py-3 text-xl bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
         Kontynuuj trasę
       </button>
     </Link>
