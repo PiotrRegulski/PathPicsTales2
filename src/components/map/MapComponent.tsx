@@ -10,6 +10,7 @@ import PhotoInput from "./camera/PhotoInput";
 import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
 import TrackAutoSaver from "./TrackAutoSaver";
+import { openDB } from "idb";
 
 type UserPosition = {
   lat: number;
@@ -22,11 +23,16 @@ type Photo = {
   position: UserPosition;
   timestamp: number;
 };
+
+type MapComponentProps = {
+  resume?: boolean;
+};
+
 const MIN_DISTANCE = 5; // minimalna odległość w metrach
 const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
 const MAX_ACCURACY = 25; // maksymalna akceptowalna dokładność GPS w metrach
 
-const MapComponent = () => {
+const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [track, setTrack] = useState<UserPosition[]>([]);
   const [speed, setSpeed] = useState<number>(0);
@@ -45,6 +51,24 @@ const MapComponent = () => {
 
   const [trackName, setTrackName] = useState("");
  const [photos, setPhotos] = useState<Photo[]>([]);
+ useEffect(() => {
+    async function loadOngoingTrack() {
+      if (resume) {
+        const db = await openDB("TravelDB", 1);
+        const ongoing = await db.get("tempTracks", "ongoing");
+        if (ongoing) {
+          setTrack(ongoing.track || []);
+          setPhotos(ongoing.photos || []);
+          setDistance(ongoing.distance || 0);
+          setTravelTime(ongoing.travelTime || 0);
+          setElapsedTime(ongoing.elapsedTime || 0);
+          setTrackName(ongoing.trackName || "");
+          setIsTracking(true); // Możesz ustawić tracking na true, jeśli chcesz wznowić śledzenie
+        }
+      }
+    }
+    loadOngoingTrack();
+  }, [resume]);
   // Pobranie początkowej pozycji
   useEffect(() => {
     if ("geolocation" in navigator) {

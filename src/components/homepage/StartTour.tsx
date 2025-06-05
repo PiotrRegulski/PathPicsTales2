@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import ContinueTrackButton from "./ContinueTrackButton";
 
 const StartTour = () => {
   return (
@@ -18,6 +19,7 @@ const StartTour = () => {
             Zapisane Trasy
           </button>
         </Link>
+        <ContinueTrackButton/>
     </div>
   );
 };
