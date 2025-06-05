@@ -1,11 +1,9 @@
 "use client";
-
 import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("@/components/map/MapComponent"), { ssr: false });
 
 export default function MapPage({ searchParams }: { searchParams: { resume?: string } }) {
-  // Przekazujemy resume jako boolean
   const resume = searchParams?.resume === "true";
   return (
     <div className="flex flex-col items-center w-full">
