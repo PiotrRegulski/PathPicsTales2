@@ -7,16 +7,15 @@ const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   loading: () => <p>Ładowanie mapy...</p>,
 });
 
-type SearchParams = {
-  [key: string]: string | string[] | undefined;
-};
+type SearchParams = Record<string, string | string[] | undefined>;
 
 type MapPageProps = {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>;
 };
 
-export default function MapPage({ searchParams }: MapPageProps) {
-  const resumeParam = searchParams?.resume;
+export default async function MapPage({ searchParams }: MapPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const resumeParam = resolvedSearchParams?.resume;
 
   const resume =
     typeof resumeParam === "string"
