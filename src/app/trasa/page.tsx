@@ -1,10 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import React from "react";
 
 const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   ssr: false,
-  loading: () => <p>Ładowaaanie mapy...</p>,
+  loading: () => <p>Ładowanie mapy...</p>,
 });
 
 type MapPageProps = {
@@ -12,6 +13,7 @@ type MapPageProps = {
 };
 
 export default function MapPage({ searchParams }: MapPageProps) {
+  // Pobieramy parametr 'resume' z URL
   const resumeParam = searchParams?.get("resume");
   const resume = resumeParam === "true";
 
