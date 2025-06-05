@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   ssr: false,
-  loading: () => <p>Ładowanie mapy...</p>,
+  loading: () => <p>Ładowaaanie mapy...</p>,
 });
 
 type MapPageProps = {
