@@ -7,11 +7,17 @@ const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   loading: () => <p>Ładowanie mapy...</p>,
 });
 
-export default async function MapPage({ searchParams }: MapPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const resumeParam = resolvedSearchParams?.resume;
+type SearchParams = {
+  [key: string]: string | string[] | undefined;
+};
 
-  // resumeParam może być string lub string[]
+type MapPageProps = {
+  searchParams?: SearchParams;
+};
+
+export default function MapPage({ searchParams }: MapPageProps) {
+  const resumeParam = searchParams?.resume;
+
   const resume =
     typeof resumeParam === "string"
       ? resumeParam === "true"
