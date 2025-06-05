@@ -1,21 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React from "react";
 
 const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   ssr: false,
   loading: () => <p>Ładowanie mapy...</p>,
 });
 
-type MapPageProps = {
-  searchParams?: URLSearchParams;
-};
+export default async function MapPage({ searchParams }: MapPageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const resumeParam = resolvedSearchParams?.resume;
 
-export default function MapPage({ searchParams }: MapPageProps) {
-  // Pobieramy parametr 'resume' z URL
-  const resumeParam = searchParams?.get("resume");
-  const resume = resumeParam === "true";
+  // resumeParam może być string lub string[]
+  const resume =
+    typeof resumeParam === "string"
+      ? resumeParam === "true"
+      : Array.isArray(resumeParam)
+      ? resumeParam.includes("true")
+      : false;
 
   return (
     <div className="flex flex-col items-center w-full">
