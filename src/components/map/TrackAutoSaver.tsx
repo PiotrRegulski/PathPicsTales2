@@ -36,14 +36,14 @@ export default function TrackAutoSaver({
   // 2. Obsługa beforeunload tylko do pokazania komunikatu ostrzegawczego
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if ((isTracking || track.length > 0) && track.length > 0) {
+      if ((isTracking || track.length > 0) && track.length > 0 && travelTime > 0) {
         e.preventDefault();
         e.returnValue = ""; // Standardowy komunikat ostrzegawczy
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [track, isTracking]);
+  }, [track, isTracking,travelTime]);
 
   return null;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
@@ -7,21 +8,13 @@ const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
   loading: () => <p>Ładowanie mapy...</p>,
 });
 
-type SearchParams = Record<string, string | string[] | undefined>;
+export default function MapPage() {
+  const [resume, setResume] = useState(false);
 
-type MapPageProps = {
-  searchParams?: SearchParams;
-};
-
-export default function MapPage({ searchParams }: MapPageProps) {
-  const resumeParam = searchParams?.resume;
-
-  const resume =
-    typeof resumeParam === "string"
-      ? resumeParam === "true"
-      : Array.isArray(resumeParam)
-      ? resumeParam.includes("true")
-      : false;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setResume(params.get("resume") === "true");
+  }, []);
 
   return (
     <div className="flex flex-col items-center w-full">
@@ -30,3 +23,4 @@ export default function MapPage({ searchParams }: MapPageProps) {
     </div>
   );
 }
+

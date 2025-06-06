@@ -7,7 +7,7 @@ const withPWA = withPWAInit({
   reloadOnOnline: false,
   disable:false,
   workboxOptions: {
-    disableDevLogs:false,
+    disableDevLogs:true,
 }});
 
 export default withPWA({

@@ -20,12 +20,18 @@ export default function ContinueTrackButton() {
     checkOngoing();
   }, []);
 
-  if (hasOngoing === null) return null;
-  if (!hasOngoing) return null;
+  if (hasOngoing === null) return null; // czekamy na wynik
 
   return (
-    <Link href="/trasa?resume=true">
-      <button className="px-6 py-3 text-xl bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300">
+    <Link href={hasOngoing ? "/trasa?resume=true" : "#"} legacyBehavior>
+      <button
+        disabled={!hasOngoing}
+        className={`px-6 py-3 text-xl rounded-lg transition duration-300 ${
+          hasOngoing
+            ? "bg-blue-600 text-white hover:bg-blue-700"
+            : "bg-gray-400 text-gray-700 cursor-not-allowed"
+        }`}
+      >
         Kontynuuj trasę
       </button>
     </Link>
