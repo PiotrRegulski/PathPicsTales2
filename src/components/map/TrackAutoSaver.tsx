@@ -1,5 +1,5 @@
 "use client";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { openDB } from "idb";
 
 import type { TrackAutoSaver } from "@/components/map/types";
@@ -15,6 +15,21 @@ export default function TrackAutoSaver({
 }: TrackAutoSaver) {
   const [message, setMessage] = useState("");
 
+  // Inicjalizacja bazy danych z utworzeniem obiektu magazynu tempTracks
+  useEffect(() => {
+    async function initDB() {
+      await openDB("TravelDB", 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("tempTracks")) {
+            db.createObjectStore("tempTracks", { keyPath: "id" });
+          }
+        },
+      });
+    }
+    initDB();
+  }, []);
+
+  // Zapis danych trasy do IndexedDB
   useEffect(() => {
     const saveTrack = async () => {
       if (isTracking || travelTime > 0) {
@@ -38,16 +53,17 @@ export default function TrackAutoSaver({
     saveTrack();
   }, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
 
-useEffect(() => {
-  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (isTracking || travelTime > 0) {
-      e.preventDefault();
-      e.returnValue = ""; // Wywołuje domyślne ostrzeżenie przeglądarki
-    }
-  };
-  window.addEventListener("beforeunload", handleBeforeUnload);
-  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-}, [isTracking, travelTime]);
+  // Ostrzeżenie przed zamknięciem lub odświeżeniem strony podczas śledzenia
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isTracking || travelTime > 0) {
+        e.preventDefault();
+        e.returnValue = ""; // Wywołuje domyślne ostrzeżenie przeglądarki
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isTracking, travelTime]);
 
   // Komunikat pojawia się tylko, gdy message nie jest pusty
   return message ? (
