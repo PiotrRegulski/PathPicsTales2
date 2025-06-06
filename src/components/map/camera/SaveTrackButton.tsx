@@ -21,6 +21,21 @@ type SaveTrackButtonProps = {
   onReset: () => void;
 };
 
+// Funkcja pomocnicza do otwierania bazy z migracją
+async function getDB() {
+  return openDB("TravelDB", 2, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains("tempTracks")) {
+        db.createObjectStore("tempTracks", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("tracks")) {
+        const store = db.createObjectStore("tracks", { keyPath: "id" });
+        store.createIndex("by-date", "date");
+      }
+    },
+  });
+}
+
 export default function SaveTrackButton({
   trackName,
   track,
@@ -40,14 +55,7 @@ export default function SaveTrackButton({
       return;
     }
 
-    const db = await openDB("TravelDB", 1, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains("tracks")) {
-          const store = db.createObjectStore("tracks", { keyPath: "id" });
-          store.createIndex("by-date", "date");
-        }
-      },
-    });
+    const db = await getDB();
 
     const trackData = {
       id: crypto.randomUUID(),

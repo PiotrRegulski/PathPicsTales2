@@ -4,6 +4,21 @@ import { openDB } from "idb";
 
 import type { TrackAutoSaver } from "@/components/map/types";
 
+// Funkcja pomocnicza do otwierania bazy z migracją
+async function getDB() {
+  return openDB("TravelDB", 2, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains("tempTracks")) {
+        db.createObjectStore("tempTracks", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("tracks")) {
+        const store = db.createObjectStore("tracks", { keyPath: "id" });
+        store.createIndex("by-date", "date");
+      }
+    },
+  });
+}
+
 export default function TrackAutoSaver({
   track,
   photos,
@@ -15,31 +30,16 @@ export default function TrackAutoSaver({
 }: TrackAutoSaver) {
   const [message, setMessage] = useState("");
 
-  // Inicjalizacja bazy danych z utworzeniem obiektu magazynu tempTracks
+  // Inicjalizacja bazy danych przy montowaniu komponentu
   useEffect(() => {
-    async function initDB() {
-      await openDB("TravelDB", 1, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains("tempTracks")) {
-            db.createObjectStore("tempTracks", { keyPath: "id" });
-          }
-        },
-      });
-    }
-    initDB();
+    getDB();
   }, []);
 
-  // Zapis danych trasy do IndexedDB
+  // Zapis danych trasy do IndexedDB w czasie rzeczywistym
   useEffect(() => {
     const saveTrack = async () => {
       if (isTracking || travelTime > 0) {
-        const db = await openDB("TravelDB", 1, {
-          upgrade(db) {
-            if (!db.objectStoreNames.contains("tempTracks")) {
-              db.createObjectStore("tempTracks", { keyPath: "id" });
-            }
-          },
-        });
+        const db = await getDB();
         await db.put("tempTracks", {
           id: "ongoing",
           track,
@@ -53,7 +53,7 @@ export default function TrackAutoSaver({
         setMessage("Dane są zapisywane");
         console.log("TrackAutoSaver: zapisano trasę");
       } else {
-        setMessage(""); // Nie pokazuj żadnego komunikatu
+        setMessage("");
       }
     };
     saveTrack();
@@ -90,5 +90,3 @@ export default function TrackAutoSaver({
     </div>
   ) : null;
 }
-// Ten komponent automatycznie zapisuje dane trasy do IndexedDB,
-// a także ostrzega użytkownika przed zamknięciem lub odświeżeniem strony,

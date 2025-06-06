@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React from "react";
 import ContinueTrackButton from "./ContinueTrackButton";
+import DeleteDatabaseButton from "./DeleteDatabase";
 
 const StartTour = () => {
   return (
@@ -21,6 +22,7 @@ const StartTour = () => {
           </button>
         </Link>
         <ContinueTrackButton/>
+        <DeleteDatabaseButton/>
     </div>
   );
 };
