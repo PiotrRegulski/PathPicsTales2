@@ -10,12 +10,11 @@ const MapComponent = dynamic(() => import("@/components/map/MapComponent"), {
 type SearchParams = Record<string, string | string[] | undefined>;
 
 type MapPageProps = {
-  searchParams?: Promise<SearchParams>;
+  searchParams?: SearchParams;
 };
 
-export default async function MapPage({ searchParams }: MapPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const resumeParam = resolvedSearchParams?.resume;
+export default function MapPage({ searchParams }: MapPageProps) {
+  const resumeParam = searchParams?.resume;
 
   const resume =
     typeof resumeParam === "string"
