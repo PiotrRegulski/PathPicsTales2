@@ -17,7 +17,7 @@ export default function TrackAutoSaver({
 
   useEffect(() => {
     const saveTrack = async () => {
-      if ((isTracking || track.length > 0) && track.length > 0 && travelTime > 0) {
+      if (isTracking || travelTime > 0) {
         const db = await openDB("TravelDB", 1);
         await db.put("tempTracks", {
           id: "ongoing",
