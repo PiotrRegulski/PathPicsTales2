@@ -29,17 +29,28 @@ export default function TrackAutoSaver({
           trackName,
           timestamp: Date.now(),
         });
-        setMessage("TrackAutoSaver: zapisano trasę");
+        setMessage("Dane są zapisywane");
         console.log("TrackAutoSaver: zapisano trasę");
       } else {
-        setMessage("TrackAutoSaver: brak danych do zapisu");
-        console.log("TrackAutoSaver: brak danych do zapisu");
+        setMessage(""); // Nie pokazuj żadnego komunikatu
       }
     };
     saveTrack();
   }, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
 
-  return (
+useEffect(() => {
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (isTracking || travelTime > 0) {
+      e.preventDefault();
+      e.returnValue = ""; // Wywołuje domyślne ostrzeżenie przeglądarki
+    }
+  };
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, [isTracking, travelTime]);
+
+  // Komunikat pojawia się tylko, gdy message nie jest pusty
+  return message ? (
     <div
       style={{
         position: "fixed",
@@ -55,5 +66,5 @@ export default function TrackAutoSaver({
     >
       {message}
     </div>
-  );
+  ) : null;
 }
