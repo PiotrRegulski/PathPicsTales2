@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 import { openDB } from "idb";
 
 import type { TrackAutoSaver } from "@/components/map/types";
@@ -13,10 +13,11 @@ export default function TrackAutoSaver({
   trackName,
   isTracking,
 }: TrackAutoSaver) {
-  // 1. Zapisuj stan na bieżąco po każdej zmianie track i innych danych
+  const [message, setMessage] = useState("");
+
   useEffect(() => {
     const saveTrack = async () => {
-      if ((isTracking || track.length > 0) && track.length > 0) {
+      if ((isTracking || track.length > 0) && track.length > 0 && travelTime > 0) {
         const db = await openDB("TravelDB", 1);
         await db.put("tempTracks", {
           id: "ongoing",
@@ -28,22 +29,31 @@ export default function TrackAutoSaver({
           trackName,
           timestamp: Date.now(),
         });
+        setMessage("TrackAutoSaver: zapisano trasę");
+        console.log("TrackAutoSaver: zapisano trasę");
+      } else {
+        setMessage("TrackAutoSaver: brak danych do zapisu");
+        console.log("TrackAutoSaver: brak danych do zapisu");
       }
     };
     saveTrack();
   }, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
 
-  // 2. Obsługa beforeunload tylko do pokazania komunikatu ostrzegawczego
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if ((isTracking || track.length > 0) && track.length > 0 && travelTime > 0) {
-        e.preventDefault();
-        e.returnValue = ""; // Standardowy komunikat ostrzegawczy
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [track, isTracking,travelTime]);
-
-  return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        backgroundColor: "#eee",
+        padding: "8px",
+        textAlign: "center",
+        fontSize: "14px",
+        zIndex: 9999,
+      }}
+    >
+      {message}
+    </div>
+  );
 }
