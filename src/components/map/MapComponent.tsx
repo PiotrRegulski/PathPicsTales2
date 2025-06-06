@@ -54,10 +54,14 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   useEffect(() => {
   async function loadOngoingTrack() {
     if (resume) {
-      const db = await openDB("TravelDB", 1, {
+      const db = await openDB("TravelDB", 2, {
         upgrade(db) {
           if (!db.objectStoreNames.contains("tempTracks")) {
             db.createObjectStore("tempTracks", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("tracks")) {
+            const store = db.createObjectStore("tracks", { keyPath: "id" });
+            store.createIndex("by-date", "date");
           }
         },
       });
@@ -75,6 +79,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }
   loadOngoingTrack();
 }, [resume]);
+
 
   // Pobranie początkowej pozycji
   useEffect(() => {
