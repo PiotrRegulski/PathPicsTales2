@@ -33,7 +33,13 @@ export default function TrackAutoSaver({
   useEffect(() => {
     const saveTrack = async () => {
       if (isTracking || travelTime > 0) {
-        const db = await openDB("TravelDB", 1);
+        const db = await openDB("TravelDB", 1, {
+          upgrade(db) {
+            if (!db.objectStoreNames.contains("tempTracks")) {
+              db.createObjectStore("tempTracks", { keyPath: "id" });
+            }
+          },
+        });
         await db.put("tempTracks", {
           id: "ongoing",
           track,
@@ -84,3 +90,5 @@ export default function TrackAutoSaver({
     </div>
   ) : null;
 }
+// Ten komponent automatycznie zapisuje dane trasy do IndexedDB,
+// a także ostrzega użytkownika przed zamknięciem lub odświeżeniem strony,

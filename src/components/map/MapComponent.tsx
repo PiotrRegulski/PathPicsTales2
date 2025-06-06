@@ -52,23 +52,30 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [trackName, setTrackName] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
   useEffect(() => {
-    async function loadOngoingTrack() {
-      if (resume) {
-        const db = await openDB("TravelDB", 1);
-        const ongoing = await db.get("tempTracks", "ongoing");
-        if (ongoing) {
-          setTrack(ongoing.track || []);
-          setPhotos(ongoing.photos || []);
-          setDistance(ongoing.distance || 0);
-          setTravelTime(ongoing.travelTime || 0);
-          setElapsedTime(ongoing.elapsedTime || 0);
-          setTrackName(ongoing.trackName || "");
-          setIsTracking(true); // Możesz ustawić tracking na true, jeśli chcesz wznowić śledzenie
-        }
+  async function loadOngoingTrack() {
+    if (resume) {
+      const db = await openDB("TravelDB", 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("tempTracks")) {
+            db.createObjectStore("tempTracks", { keyPath: "id" });
+          }
+        },
+      });
+      const ongoing = await db.get("tempTracks", "ongoing");
+      if (ongoing) {
+        setTrack(ongoing.track || []);
+        setPhotos(ongoing.photos || []);
+        setDistance(ongoing.distance || 0);
+        setTravelTime(ongoing.travelTime || 0);
+        setElapsedTime(ongoing.elapsedTime || 0);
+        setTrackName(ongoing.trackName || "");
+        setIsTracking(true);
       }
     }
-    loadOngoingTrack();
-  }, [resume]);
+  }
+  loadOngoingTrack();
+}, [resume]);
+
   // Pobranie początkowej pozycji
   useEffect(() => {
     if ("geolocation" in navigator) {
