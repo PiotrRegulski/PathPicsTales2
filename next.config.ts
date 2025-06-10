@@ -3,9 +3,9 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav:true,
-  aggressiveFrontEndNavCaching:false,
-  reloadOnOnline: false,
-  disable:false,
+  aggressiveFrontEndNavCaching:true,
+  reloadOnOnline: true,
+  disable:true,
   workboxOptions: {
     disableDevLogs:true,
 }});
