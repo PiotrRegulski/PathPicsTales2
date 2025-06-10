@@ -9,7 +9,7 @@ export default function ContinueTrackButton() {
   useEffect(() => {
     async function checkOngoing() {
       try {
-        const db = await openDB("TravelDB", 1);
+        const db = await openDB("TravelDB", 2);
         const ongoing = await db.get("tempTracks", "ongoing");
         setHasOngoing(!!ongoing);
       } catch (error) {
