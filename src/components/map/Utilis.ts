@@ -1,5 +1,5 @@
 // Funkcje pomocnicze
-
+import { openDB } from "idb";
 export function getDistanceFromLatLonInMeters(
   lat1: number,
   lon1: number,
@@ -23,4 +23,19 @@ export function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}m ${secs}s`;
+}
+
+
+export async function getDB() {
+  return openDB("TravelDB", 2, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains("tempTracks")) {
+        db.createObjectStore("tempTracks", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("tracks")) {
+        const store = db.createObjectStore("tracks", { keyPath: "id" });
+        store.createIndex("by-date", "date");
+      }
+    },
+  });
 }

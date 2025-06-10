@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { openDB } from "idb";
+
 import Link from "next/link";
+import { getDB } from "../map/Utilis";
 
 export default function ContinueTrackButton() {
   const [hasOngoing, setHasOngoing] = useState<boolean | null>(null);
@@ -9,7 +10,7 @@ export default function ContinueTrackButton() {
   useEffect(() => {
     async function checkOngoing() {
       try {
-        const db = await openDB("TravelDB", 2);
+        const db = await getDB();
         const ongoing = await db.get("tempTracks", "ongoing");
         setHasOngoing(!!ongoing);
       } catch (error) {
