@@ -33,7 +33,7 @@ export default function ZapisaneTrasy()  {
 
   useEffect(() => {
     const loadTracks = async () => {
-      const db = await openDB("TravelDB", 1);
+      const db = await openDB("TravelDB", 2);
       const allTracks = await db.getAll("tracks");
       setTracks(allTracks as Track[]);
       setLoading(false);
