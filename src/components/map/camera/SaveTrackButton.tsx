@@ -2,6 +2,7 @@
 import React from "react";
 import { openDB } from "idb";
 import type { UserPosition } from "@/components/map/types";
+import router from "next/router";
 
 type Photo = {
   id: string;
@@ -71,6 +72,7 @@ export default function SaveTrackButton({
     await db.put("tracks", trackData);
     alert("Trasa i zdjęcia zostały zapisane.");
     onReset();
+     router.push("/zapisane-trasy"); // przekierowanie po zapisie
   };
 
   return (
