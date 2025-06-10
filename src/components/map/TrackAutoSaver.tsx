@@ -36,9 +36,10 @@ export default function TrackAutoSaver({
   }, []);
 
   // Zapis danych trasy do IndexedDB w czasie rzeczywistym
-  useEffect(() => {
-    const saveTrack = async () => {
-      if (isTracking || travelTime > 0) {
+ useEffect(() => {
+  const saveTrack = async () => {
+    if (isTracking || travelTime > 0) {
+      try {
         const db = await getDB();
         await db.put("tempTracks", {
           id: "ongoing",
@@ -52,12 +53,17 @@ export default function TrackAutoSaver({
         });
         setMessage("Dane są zapisywane");
         console.log("TrackAutoSaver: zapisano trasę");
-      } else {
-        setMessage("");
+      } catch (error) {
+        console.error("Błąd zapisu trasy do IndexedDB:", error);
+        setMessage("Błąd zapisu danych");
       }
-    };
-    saveTrack();
-  }, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
+    } else {
+      setMessage("");
+    }
+  };
+  saveTrack();
+}, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
+
 
   // Ostrzeżenie przed zamknięciem lub odświeżeniem strony podczas śledzenia
   useEffect(() => {
