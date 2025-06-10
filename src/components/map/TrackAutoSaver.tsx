@@ -74,17 +74,9 @@ export default function TrackAutoSaver({
   // Komunikat pojawia się tylko, gdy message nie jest pusty
   return message ? (
     <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        backgroundColor: "#eee",
-        padding: "8px",
-        textAlign: "center",
-        fontSize: "14px",
-        zIndex: 9999,
-      }}
+     className="
+      fixed bottom-4 left-1/2 transform -translate-x-1/2
+      bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg"
     >
       {message}
     </div>

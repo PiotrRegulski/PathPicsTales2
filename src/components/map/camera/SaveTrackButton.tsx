@@ -2,7 +2,7 @@
 import React from "react";
 import { openDB } from "idb";
 import type { UserPosition } from "@/components/map/types";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 type Photo = {
   id: string;
@@ -46,6 +46,8 @@ export default function SaveTrackButton({
   photos,
   onReset,
 }: SaveTrackButtonProps) {
+
+  const router = useRouter();
   const saveTrackToDB = async () => {
     if (!trackName.trim()) {
       alert("Podaj nazwę trasy przed zapisem.");
