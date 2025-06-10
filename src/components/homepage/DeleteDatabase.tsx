@@ -25,15 +25,15 @@ export default function DeleteDatabaseButton() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center w-full bg-gray-100 text-gray-800">
       <button
         onClick={deleteDatabase}
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        className="my-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-shadow duration-300 "
       >
         Usuń bazę danych
       </button>
       {message && (
-        <p style={{ marginTop: "8px", color: message.includes("błąd") ? "red" : "green" }}>
+        <p className="mt-2 text-red-600">
           {message}
         </p>
       )}
