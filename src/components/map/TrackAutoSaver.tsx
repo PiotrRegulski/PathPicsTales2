@@ -36,34 +36,33 @@ export default function TrackAutoSaver({
   }, []);
 
   // Zapis danych trasy do IndexedDB w czasie rzeczywistym
- useEffect(() => {
-  const saveTrack = async () => {
-    if (isTracking || travelTime > 0) {
-      try {
-        const db = await getDB();
-        await db.put("tempTracks", {
-          id: "ongoing",
-          track,
-          photos,
-          distance,
-          travelTime,
-          elapsedTime,
-          trackName,
-          timestamp: Date.now(),
-        });
-        setMessage("Dane są zapisywane");
-        console.log("TrackAutoSaver: zapisano trasę");
-      } catch (error) {
-        console.error("Błąd zapisu trasy do IndexedDB:", error);
-        setMessage("Błąd zapisu danych");
+  useEffect(() => {
+    const saveTrack = async () => {
+      if (isTracking || travelTime > 0) {
+        try {
+          const db = await getDB();
+          await db.put("tempTracks", {
+            id: "ongoing",
+            track,
+            photos,
+            distance,
+            travelTime,
+            elapsedTime,
+            trackName,
+            timestamp: Date.now(),
+          });
+          setMessage("Dane są zapisywane");
+          console.log("TrackAutoSaver: zapisano trasę");
+        } catch (error) {
+          console.error("Błąd zapisu trasy do IndexedDB:", error);
+          setMessage("Błąd zapisu danych");
+        }
+      } else {
+        setMessage("");
       }
-    } else {
-      setMessage("");
-    }
-  };
-  saveTrack();
-}, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
-
+    };
+    saveTrack();
+  }, [track, photos, distance, travelTime, elapsedTime, trackName, isTracking]);
 
   // Ostrzeżenie przed zamknięciem lub odświeżeniem strony podczas śledzenia
   useEffect(() => {
@@ -80,8 +79,8 @@ export default function TrackAutoSaver({
   // Komunikat pojawia się tylko, gdy message nie jest pusty
   return message ? (
     <div
-     className="
-      fixed bottom-4 left-1/2 transform -translate-x-1/2
+      className="
+      fixed top-4 left-1/2 transform -translate-x-1/2
       bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg"
     >
       {message}

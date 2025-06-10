@@ -230,62 +230,61 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setPhotos((prev) => [...prev, newPhoto]);
   };
   // Obsługa start/pauza śledzenia
-  const handleStartPause = () => {
-    if (isTracking) {
-      // Pauzujemy śledzenie
-      setIsTracking(false);
-      setSpeed(0);
+// Obsługa start/pauza śledzenia
+const handleStartPause = () => {
+  if (isTracking) {
+    // Pauzujemy śledzenie
+    setIsTracking(false);
+    setSpeed(0);
+    if (startTime) {
+      setPausedTime(
+        (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
+      );
+      setStartTime(null);
+    }
+    if (elapsedStart) {
+      setPausedElapsed(
+        (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
+      );
+      setElapsedStart(null);
+    }
+  } else {
+    // Wznawiamy śledzenie - najpierw pobieramy aktualną pozycję
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newPosition = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+          };
+          setUserPosition(newPosition);
 
-      if (startTime) {
-        setPausedTime(
-          (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
-        );
-        setStartTime(null);
-      }
-      if (elapsedStart) {
-        setPausedElapsed(
-          (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
-        );
-        setElapsedStart(null);
-      }
+          setIsTracking(true);
+          // Ustaw startTime tylko jeśli nie jest już ustawione (ważne przy resume)
+          if (!startTime) setStartTime(Date.now());
+
+          // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta
+          if (track.length === 0) {
+            setTrack([newPosition]);
+          }
+        },
+        (error) => {
+          setGpsError(error.message);
+          setIsTracking(true);
+          if (!startTime) setStartTime(Date.now());
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
     } else {
-      // Wznawiamy śledzenie - najpierw pobieramy aktualną pozycję
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const newPosition = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            };
-            setUserPosition(newPosition);
-
-            setIsTracking(true);
-            if (!startTime) setStartTime(Date.now());
-
-            // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta
-            if (track.length === 0) {
-              setTrack([newPosition]);
-            }
-          },
-          (error) => {
-            // Obsłuż błąd GPS, np. ustaw komunikat
-            setGpsError(error.message);
-            // Mimo błędu włącz śledzenie, jeśli chcesz
-            setIsTracking(true);
-            if (!startTime) setStartTime(Date.now());
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      } else {
-        // Jeśli geolokalizacja niedostępna, po prostu włącz śledzenie
-        setIsTracking(true);
-        if (!startTime) setStartTime(Date.now());
-        if (track.length === 0 && userPosition) {
-          setTrack([userPosition]);
-        }
+      setIsTracking(true);
+      if (!startTime) setStartTime(Date.now());
+      if (track.length === 0 && userPosition) {
+        setTrack([userPosition]);
       }
     }
-  };
+  }
+};
+
 
   // Reset wszystkich danych
   const handleReset = () => {
