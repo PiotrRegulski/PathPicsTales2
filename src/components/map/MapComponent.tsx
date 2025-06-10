@@ -98,6 +98,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       );
     }
   }, []);
+useEffect(() => {
+  if (!isTracking || !startTime) return;
+  const interval = setInterval(() => {
+    setTravelTime(pausedTime + Math.floor((Date.now() - startTime) / 1000));
+  }, 1000);
+  return () => clearInterval(interval);
+}, [isTracking, startTime, pausedTime]);
 
   // Obsługa śledzenia pozycji podczas aktywnego tracking'u
   useEffect(() => {
@@ -236,16 +243,16 @@ const handleStartPause = () => {
     // Pauzujemy śledzenie
     setIsTracking(false);
     setSpeed(0);
+
+    // Sumujemy czas od ostatniego wznowienia do pauzy
     if (startTime) {
-      setPausedTime(
-        (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
-      );
+      setPausedTime(prev => prev + Math.floor((Date.now() - startTime) / 1000));
       setStartTime(null);
     }
+
+    // Pauzujemy licznik czasu w ruchu
     if (elapsedStart) {
-      setPausedElapsed(
-        (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
-      );
+      setPausedElapsed(prev => prev + Math.floor((Date.now() - elapsedStart) / 1000));
       setElapsedStart(null);
     }
   } else {
@@ -261,10 +268,10 @@ const handleStartPause = () => {
 
           setIsTracking(true);
 
-          // NIE ustawiaj startTime, jeśli już istnieje (czyli kontynuujesz trasę)
-          if (!startTime && travelTime === 0) setStartTime(Date.now());
+          // startTime ustawiamy zawsze na nowy moment wznowienia
+          setStartTime(Date.now());
 
-          // Dodaj pierwszy punkt do trasy tylko jeśli trasa jest pusta
+          // Dodaj pierwszy punkt do trasy tylko jeśli trasa jest pusta (nowa trasa)
           if (track.length === 0) {
             setTrack([newPosition]);
           }
@@ -272,19 +279,20 @@ const handleStartPause = () => {
         (error) => {
           setGpsError(error.message);
           setIsTracking(true);
-          if (!startTime && travelTime === 0) setStartTime(Date.now());
+          setStartTime(Date.now());
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     } else {
       setIsTracking(true);
-      if (!startTime && travelTime === 0) setStartTime(Date.now());
+      setStartTime(Date.now());
       if (track.length === 0 && userPosition) {
         setTrack([userPosition]);
       }
     }
   }
 };
+
 
 
 
