@@ -229,27 +229,23 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     };
     setPhotos((prev) => [...prev, newPhoto]);
   };
-  // Obsługa start/pauza śledzenia
+
 // Obsługa start/pauza śledzenia
 const handleStartPause = () => {
   if (isTracking) {
-    // Pauzujemy śledzenie
+    // Pauzowanie śledzenia
     setIsTracking(false);
     setSpeed(0);
     if (startTime) {
-      setPausedTime(
-        (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
-      );
+      setPausedTime(prev => prev + Math.floor((Date.now() - startTime) / 1000));
       setStartTime(null);
     }
     if (elapsedStart) {
-      setPausedElapsed(
-        (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
-      );
+      setPausedElapsed(prev => prev + Math.floor((Date.now() - elapsedStart) / 1000));
       setElapsedStart(null);
     }
   } else {
-    // Wznawiamy śledzenie - najpierw pobieramy aktualną pozycję
+    // Wznawianie śledzenia
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -260,11 +256,10 @@ const handleStartPause = () => {
           setUserPosition(newPosition);
 
           setIsTracking(true);
-          // Ustaw startTime tylko jeśli nie jest już ustawione (ważne przy resume)
           if (!startTime) setStartTime(Date.now());
 
-          // Dodaj pierwszy punkt do trasy, jeśli trasa jest pusta
-          if (track.length === 0) {
+          // Dodaj pierwszy punkt do trasy TYLKO jeśli trasa jest pusta i NIE KONTYNUUJESZ
+          if (track.length === 0 && !resume) {
             setTrack([newPosition]);
           }
         },
@@ -278,12 +273,13 @@ const handleStartPause = () => {
     } else {
       setIsTracking(true);
       if (!startTime) setStartTime(Date.now());
-      if (track.length === 0 && userPosition) {
+      if (track.length === 0 && userPosition && !resume) {
         setTrack([userPosition]);
       }
     }
   }
 };
+
 
 
   // Reset wszystkich danych
