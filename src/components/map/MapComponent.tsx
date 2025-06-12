@@ -11,6 +11,8 @@ import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
 import TrackAutoSaver from "./TrackAutoSaver";
 import { openDB } from "idb";
+import KalmanFilter from "kalmanjs";
+import { useRef } from "react";
 
 type UserPosition = {
   lat: number;
@@ -48,38 +50,45 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [elapsedStart, setElapsedStart] = useState<number | null>(null);
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
+  //Kalman filter for smoothing GPS data
+
+  const latFilter = useRef(new KalmanFilter());
+  const lonFilter = useRef(new KalmanFilter());
 
   const [trackName, setTrackName] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
+
   useEffect(() => {
-  async function loadOngoingTrack() {
-    if (resume) {
-      const db = await openDB("TravelDB", 2, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains("tempTracks")) {
-            db.createObjectStore("tempTracks", { keyPath: "id" });
-          }
-          if (!db.objectStoreNames.contains("tracks")) {
-            const store = db.createObjectStore("tracks", { keyPath: "id" });
-            store.createIndex("by-date", "date");
-          }
-        },
-      });
-      const ongoing = await db.get("tempTracks", "ongoing");
-      if (ongoing) {
-        setTrack(ongoing.track || []);
-        setPhotos(ongoing.photos || []);
-        setDistance(ongoing.distance || 0);
-        setTravelTime(ongoing.travelTime || 0);
-        setElapsedTime(ongoing.elapsedTime || 0);
-        setTrackName(ongoing.trackName || "");
-        setIsTracking(true);
+    async function loadOngoingTrack() {
+      if (resume) {
+        const db = await openDB("TravelDB", 2, {
+          upgrade(db) {
+            if (!db.objectStoreNames.contains("tempTracks")) {
+              db.createObjectStore("tempTracks", { keyPath: "id" });
+            }
+            if (!db.objectStoreNames.contains("tracks")) {
+              const store = db.createObjectStore("tracks", { keyPath: "id" });
+              store.createIndex("by-date", "date");
+            }
+          },
+        });
+        const ongoing = await db.get("tempTracks", "ongoing");
+        if (ongoing) {
+          setTrack(ongoing.track || []);
+          setPhotos(ongoing.photos || []);
+          setDistance(ongoing.distance || 0);
+
+          setElapsedTime(ongoing.elapsedTime || 0);
+          setTrackName(ongoing.trackName || "");
+          setIsTracking(true);
+          setPausedTime(ongoing.travelTime || 0); // sumuj poprzedni czas
+          setStartTime(Date.now()); // nowy start od wznowienia
+          // NIE ustawiaj travelTime bezpośrednio!
+        }
       }
     }
-  }
-  loadOngoingTrack();
-}, [resume]);
-
+    loadOngoingTrack();
+  }, [resume]);
 
   // Pobranie początkowej pozycji
   useEffect(() => {
@@ -98,13 +107,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       );
     }
   }, []);
-useEffect(() => {
-  if (!isTracking || !startTime) return;
-  const interval = setInterval(() => {
-    setTravelTime(pausedTime + Math.floor((Date.now() - startTime) / 1000));
-  }, 1000);
-  return () => clearInterval(interval);
-}, [isTracking, startTime, pausedTime]);
+  useEffect(() => {
+    if (!isTracking || !startTime) return;
+    const interval = setInterval(() => {
+      setTravelTime(pausedTime + Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTracking, startTime, pausedTime]);
 
   // Obsługa śledzenia pozycji podczas aktywnego tracking'u
   useEffect(() => {
@@ -115,9 +124,16 @@ useEffect(() => {
         (position) => {
           setGpsError(null);
           if (position.coords.accuracy <= MAX_ACCURACY) {
+            // Użyj filtra Kalmana!
+            const filteredLat = latFilter.current.filter(
+              position.coords.latitude
+            );
+            const filteredLon = lonFilter.current.filter(
+              position.coords.longitude
+            );
             const newPosition = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
+              lat: filteredLat,
+              lon: filteredLon,
             };
             const newSpeed =
               position.coords.speed != null ? position.coords.speed * 3.6 : 0; // m/s -> km/h
@@ -237,65 +253,71 @@ useEffect(() => {
     setPhotos((prev) => [...prev, newPhoto]);
   };
 
-// Obsługa start/pauza śledzenia
-const handleStartPause = () => {
-  if (isTracking) {
-    // Pauzujemy śledzenie
-    setIsTracking(false);
-    setSpeed(0);
+  // Obsługa start/pauza śledzenia
+  const handleStartPause = () => {
+    if (isTracking) {
+      // Pauzujemy śledzenie
+      setIsTracking(false);
+      setSpeed(0);
 
-    // Sumujemy czas od ostatniego wznowienia do pauzy
-    if (startTime) {
-      setPausedTime(prev => prev + Math.floor((Date.now() - startTime) / 1000));
-      setStartTime(null);
-    }
+      // Sumujemy czas od ostatniego wznowienia do pauzy
+      if (startTime) {
+        setPausedTime(
+          (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
+        );
+        setStartTime(null);
+      }
 
-    // Pauzujemy licznik czasu w ruchu
-    if (elapsedStart) {
-      setPausedElapsed(prev => prev + Math.floor((Date.now() - elapsedStart) / 1000));
-      setElapsedStart(null);
-    }
-  } else {
-    // Wznawiamy śledzenie
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newPosition = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-          };
-          setUserPosition(newPosition);
-
-          setIsTracking(true);
-
-          // startTime ustawiamy zawsze na nowy moment wznowienia
-          setStartTime(Date.now());
-
-          // Dodaj pierwszy punkt do trasy tylko jeśli trasa jest pusta (nowa trasa)
-          if (track.length === 0) {
-            setTrack([newPosition]);
-          }
-        },
-        (error) => {
-          setGpsError(error.message);
-          setIsTracking(true);
-          setStartTime(Date.now());
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
+      // Pauzujemy licznik czasu w ruchu
+      if (elapsedStart) {
+        setPausedElapsed(
+          (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
+        );
+        setElapsedStart(null);
+      }
     } else {
-      setIsTracking(true);
-      setStartTime(Date.now());
-      if (track.length === 0 && userPosition) {
-        setTrack([userPosition]);
+      // Wznawiamy śledzenie
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const filteredLat = latFilter.current.filter(
+              position.coords.latitude
+            );
+            const filteredLon = lonFilter.current.filter(
+              position.coords.longitude
+            );
+            const newPosition = {
+              lat: filteredLat,
+              lon: filteredLon,
+            };
+            setUserPosition(newPosition);
+
+            setIsTracking(true);
+
+            // startTime ustawiamy zawsze na nowy moment wznowienia
+            setStartTime(Date.now());
+
+            // Dodaj pierwszy punkt do trasy tylko jeśli trasa jest pusta (nowa trasa)
+            if (track.length === 0) {
+              setTrack([newPosition]);
+            }
+          },
+          (error) => {
+            setGpsError(error.message);
+            setIsTracking(true);
+            setStartTime(Date.now());
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      } else {
+        setIsTracking(true);
+        setStartTime(Date.now());
+        if (track.length === 0 && userPosition) {
+          setTrack([userPosition]);
+        }
       }
     }
-  }
-};
-
-
-
-
+  };
 
   // Reset wszystkich danych
   const handleReset = () => {
