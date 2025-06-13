@@ -32,7 +32,7 @@ type MapComponentProps = {
 
 const MIN_DISTANCE = 5; // minimalna odległość w metrach
 const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
-const MAX_ACCURACY = 15; // maksymalna akceptowalna dokładność GPS w metrach
+const MAX_ACCURACY = 10; // maksymalna akceptowalna dokładność GPS w metrach
 
 const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
