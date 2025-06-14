@@ -9,11 +9,10 @@ const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
   loading: () => <p>Ładowanie mapy...</p>,
 });
 type Props = {
-  params: {
-    id: string;
-  };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 };
+
 
 import type { Track, Photo } from "@/components/Tracks/types";
 
