@@ -12,6 +12,7 @@ type Props = {
   params: {
     id: string;
   };
+  searchParams?: Record<string, string | string[] | undefined>;
 };
 
 import type { Track, Photo } from "@/components/Tracks/types";
