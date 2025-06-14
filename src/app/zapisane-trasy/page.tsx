@@ -60,8 +60,8 @@ export default function ZapisaneTrasy()  {
                   Zdjęcia: <b>{track.photos.length}</b>
                 </div>
               </div>
-              {/* Możesz dodać szczegóły, np. podgląd trasy */}
-              {/* <Link href={`/saved-tracks/${track.id}`}>Szczegóły</Link> */}
+             
+              <Link href={`/zapisane-trasy/${track.id}`}>Szczegóły</Link>
             </div>
           </li>
         ))}
