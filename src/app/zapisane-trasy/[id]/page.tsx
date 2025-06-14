@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import { openDB } from "idb";
 import dynamic from "next/dynamic";
 import PhotoList from "@/components/Tracks/PhotoList";
@@ -9,18 +8,22 @@ const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
   ssr: false,
   loading: () => <p>Ładowanie mapy...</p>,
 });
+type Props = {
+  params: {
+    id: string;
+  };
+};
 
 import type { Track, Photo } from "@/components/Tracks/types";
 
-export default function SavedTrackDetailsPage() {
-  const router = useRouter();
-  const { id } = router.query;
+export default function SavedTrackDetailsPage({params}:Props) {
+const { id } = params;
 
   const [track, setTrack] = useState<Track | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   useEffect(() => {
-    if (!id || Array.isArray(id)) return;
+    if (!id) return;
 
     (async () => {
       const db = await openDB("TravelDB", 2);
