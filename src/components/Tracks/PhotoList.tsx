@@ -16,7 +16,13 @@ type PhotoListProps = {
 
 
 const PhotoList: React.FC<PhotoListProps> = ({ photos, onPhotoClick }) => {
+  if (photos.length === 0) {
+  return <p>Brak zdjęć do wyświetlenia.</p>;
+}
+
   return (
+
+
     <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
       {photos.map((photo) => (
         <div 
