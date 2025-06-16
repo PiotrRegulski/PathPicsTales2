@@ -13,18 +13,12 @@ import TrackAutoSaver from "./TrackAutoSaver";
 import { openDB } from "idb";
 import KalmanFilter from "kalmanjs";
 import { useRef } from "react";
-
+import type { Photo } from "@/components/map/types";
 type UserPosition = {
   lat: number;
   lon: number;
 };
-type Photo = {
-  id: string;
-  imageDataUrl: string;
-  description: string;
-  position: UserPosition;
-  timestamp: number;
-};
+
 
 type MapComponentProps = {
   resume?: boolean;

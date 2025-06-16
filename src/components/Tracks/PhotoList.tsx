@@ -1,32 +1,22 @@
-import React from 'react';
-import Image from 'next/image';
-type Photo = {
-  id: string;
-  lat: number;
-  lng: number;
-  description: string;
-  thumbnailUrl: string;
-  dateTime: string; // np. ISO string lub sformatowana data
-};
+import React from "react";
+import Image from "next/image";
+import type { Photo } from "@/components/Tracks/types"; // <-- importuj typ
 
 type PhotoListProps = {
   photos: Photo[];
   onPhotoClick: (photo: Photo) => void;
 };
 
-
 const PhotoList: React.FC<PhotoListProps> = ({ photos, onPhotoClick }) => {
   if (photos.length === 0) {
-  return <p>Brak zdjęć do wyświetlenia.</p>;
-}
+    return <p>Brak zdjęć do wyświetlenia.</p>;
+  }
 
   return (
-
-
     <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
       {photos.map((photo) => (
-        <div 
-          key={photo.id} 
+        <div
+          key={photo.id}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -38,22 +28,30 @@ const PhotoList: React.FC<PhotoListProps> = ({ photos, onPhotoClick }) => {
           }}
           onClick={() => onPhotoClick(photo)}
           tabIndex={0}
-          onKeyDown={(e) => { if(e.key === 'Enter') onPhotoClick(photo); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') onPhotoClick(photo); }}
           role="button"
           aria-label={`Pokaż zdjęcie: ${photo.description}`}
         >
-          <Image 
-            src={photo.thumbnailUrl} 
-            alt={photo.description} 
-            width={80} 
-            height={80} 
-            style={{ borderRadius: '4px', objectFit: 'cover' }} 
+          <Image
+            src={photo.imageDataUrl}
+            alt={photo.description}
+            width={80}
+            height={80}
+            style={{ borderRadius: '4px', objectFit: 'cover' }}
+            unoptimized
           />
           <div style={{ flex: 1, marginLeft: '10px' }}>
             <p style={{ margin: 0, fontWeight: 'bold' }}>{photo.description}</p>
-            <p style={{ margin: 0, color: '#555', fontSize: '0.9em' }}>{new Date(photo.dateTime).toLocaleString()}</p>
+            <p style={{ margin: 0, color: '#555', fontSize: '0.9em' }}>
+              {new Date(photo.timestamp).toLocaleString()}
+            </p>
+            {photo.position && (
+              <small className="text-gray-400 block">
+                Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
+              </small>
+            )}
           </div>
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               onPhotoClick(photo);

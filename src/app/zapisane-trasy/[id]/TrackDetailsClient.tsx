@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { openDB } from "idb";
 import dynamic from "next/dynamic";
 import PhotoList from "@/components/Tracks/PhotoList";
-import type { Track, Photo } from "@/components/Tracks/types";
+import type { Track} from "@/components/Tracks/types";
+import type { Photo } from "@/components/map/types";
 
+// Dynamiczny import mapy (SSR off)
 const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
   ssr: false,
   loading: () => <p>Ładowanie mapy...</p>,
@@ -33,10 +35,14 @@ export default function TrackDetailsClient({ id }: Props) {
     return <p>Ładowanie...</p>;
   }
 
+  // Przekazujemy track jako tablicę obiektów {lat, lon}
+  // oraz zdjęcia z pozycją w polu position
   return (
     <div>
       <MapView
+        // przekazujemy track bez zmian, MapView musi obsłużyć [{lat, lon}]
         track={track.track}
+        // przekazujemy zdjęcia bez zmian, MapView musi obsłużyć photo.position
         photoMarkers={track.photos}
         selectedPhotoId={selectedPhoto ? selectedPhoto.id : null}
         onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
@@ -45,7 +51,6 @@ export default function TrackDetailsClient({ id }: Props) {
         photos={track.photos}
         onPhotoClick={(photo) => setSelectedPhoto(photo)}
       />
-      {/* Możesz dodać komponent Statystyki */}
     </div>
   );
 }

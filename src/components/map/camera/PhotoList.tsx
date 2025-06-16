@@ -1,18 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-type UserPosition = {
-  lat: number;
-  lon: number;
-};
-
-type Photo = {
-  id: string;
-  imageDataUrl: string;
-  description: string;
-  timestamp: number;
-  position: UserPosition;
-};
+import type { Photo } from "@/components/map/types";
 
 type PhotoListProps = {
   photos: Photo[];

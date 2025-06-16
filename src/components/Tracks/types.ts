@@ -1,20 +1,26 @@
 // src/types.ts
+export type UserPosition = {
+  lat: number;
+  lon: number;
+};
+
 export type Photo = {
   id: string;
-  lat: number;
-  lng: number;
+  imageDataUrl: string;
   description: string;
-  thumbnailUrl: string;
-  dateTime: string; // pole obowiązkowe
+  position: UserPosition;
+  timestamp: number;
 };
 
 export type Track = {
   id: string;
-  track: [number, number][];
+  track: UserPosition[];
   photos: Photo[];
+  // inne pola (opcjonalnie)
 };
+
 export type MapViewProps = {
-  track: [number, number][];
+  track: UserPosition[];
   photoMarkers: Photo[];
   selectedPhotoId?: string | null;
   onPhotoMarkerClick?: (photo: Photo) => void;

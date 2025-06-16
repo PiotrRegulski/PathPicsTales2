@@ -1,34 +1,33 @@
-"use client";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   MapContainer,
   TileLayer,
   Polyline,
   Marker,
   Popup,
-  useMap,
+  
 } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Image from "next/image";
 
-import type { Photo } from "@/components/Tracks/types";
-import type { MapViewProps } from "@/components/Tracks/types";
+type UserPosition = {
+  lat: number;
+  lon: number;
+};
 
-const FlyToPhoto = ({ photo }: { photo: Photo | null }) => {
-  const map = useMap();
+type Photo = {
+  id: string;
+  imageDataUrl: string;
+  description: string;
+  position: UserPosition;
+  timestamp: number;
+};
 
-  useEffect(() => {
-    if (
-      photo &&
-      typeof photo.lat === "number" &&
-      typeof photo.lng === "number"
-    ) {
-      map.flyTo([photo.lat, photo.lng], 15, { duration: 1.5 });
-    }
-  }, [photo, map]);
-
-  return null;
+type MapViewProps = {
+  track: UserPosition[];
+  photoMarkers: Photo[];
+  selectedPhotoId?: string | null;
+  onPhotoMarkerClick?: (photo: Photo) => void;
 };
 
 const MapView: React.FC<MapViewProps> = ({
@@ -37,20 +36,14 @@ const MapView: React.FC<MapViewProps> = ({
   selectedPhotoId,
   onPhotoMarkerClick,
 }) => {
-  // Sprawdzenie, czy track istnieje i ma poprawne współrzędne
   if (
     !track ||
     track.length === 0 ||
-    !Array.isArray(track[0]) ||
-    track[0].length !== 2 ||
-    typeof track[0][0] !== "number" ||
-    typeof track[0][1] !== "number"
+    typeof track[0].lat !== "number" ||
+    typeof track[0].lon !== "number"
   ) {
     return <p>Brak poprawnych danych trasy do wyświetlenia na mapie.</p>;
   }
-
-  const selectedPhoto =
-    photoMarkers.find((p) => p.id === selectedPhotoId) || null;
 
   const icon = new L.Icon({
     iconUrl: "/marker-icon.png",
@@ -60,7 +53,7 @@ const MapView: React.FC<MapViewProps> = ({
 
   return (
     <MapContainer
-      center={track[0]}
+      center={[track[0].lat, track[0].lon]}
       zoom={13}
       style={{ height: "400px", width: "100%" }}
     >
@@ -68,49 +61,43 @@ const MapView: React.FC<MapViewProps> = ({
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Polyline positions={track} color="blue" />
+      <Polyline positions={track.map((p) => [p.lat, p.lon])} color="blue" />
       {photoMarkers.map((photo) => {
-        // Sprawdzenie poprawności współrzędnych zdjęcia
-        if (typeof photo.lat !== "number" || typeof photo.lng !== "number") {
+        if (
+          !photo.position ||
+          typeof photo.position.lat !== "number" ||
+          typeof photo.position.lon !== "number"
+        ) {
           return null;
         }
-
-        const invalidCoordinatesCount = photoMarkers.filter(
-          (photo) =>
-            typeof photo.lat !== "number" || typeof photo.lng !== "number"
-        ).length;
         return (
           <Marker
             key={photo.id}
-            position={[photo.lat, photo.lng]}
+            position={[photo.position.lat, photo.position.lon]}
             icon={icon}
             eventHandlers={{
               click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
             }}
           >
-            {invalidCoordinatesCount > 0 && (
-              <div style={{ color: "red", marginBottom: "10px" }}>
-                Niektóre zdjęcia nie mają poprawnych współrzędnych i nie mogą
-                zostać wyświetlone na mapie.
-              </div>
-            )}
             {selectedPhotoId === photo.id && (
               <Popup>
                 <div>
                   <Image
-                    src={photo.thumbnailUrl}
+                    src={photo.imageDataUrl}
                     alt={photo.description}
                     width={100}
                     height={100}
                   />
                   <p>{photo.description}</p>
+                  <small>
+                    Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
+                  </small>
                 </div>
               </Popup>
             )}
           </Marker>
         );
       })}
-      <FlyToPhoto photo={selectedPhoto} />
     </MapContainer>
   );
 };
