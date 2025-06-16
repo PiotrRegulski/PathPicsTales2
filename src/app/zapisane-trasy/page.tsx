@@ -65,7 +65,21 @@ export default function ZapisaneTrasy() {
                   Zdjęcia: <b>{track.photos.length}</b>
                 </div>
               </div>
-
+              {/* Nowy fragment: podgląd pozycji zdjęć */}
+              {track.photos.length > 0 && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Pozycje zdjęć:
+                  <ul>
+                    {track.photos.slice(0, 3).map((photo) => (
+                      <li key={photo.id}>
+                        {photo.position.lat.toFixed(5)},{" "}
+                        {photo.position.lon.toFixed(5)}
+                      </li>
+                    ))}
+                    {track.photos.length > 3 && <li>...</li>}
+                  </ul>
+                </div>
+              )}
               <Link
                 href={`/zapisane-trasy/${track.id}`}
                 className="text-blue-600 hover:underline"
