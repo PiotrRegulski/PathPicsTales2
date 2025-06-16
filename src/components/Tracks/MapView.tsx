@@ -71,22 +71,29 @@ const MapView: React.FC<MapViewProps> = ({
       <Polyline positions={track} color="blue" />
       {photoMarkers.map((photo) => {
         // Sprawdzenie poprawności współrzędnych zdjęcia
-        if (
-          typeof photo.lat !== "number" ||
-          typeof photo.lng !== "number"
-        ) {
+        if (typeof photo.lat !== "number" || typeof photo.lng !== "number") {
           return null;
         }
+
+        const invalidCoordinatesCount = photoMarkers.filter(
+          (photo) =>
+            typeof photo.lat !== "number" || typeof photo.lng !== "number"
+        ).length;
         return (
           <Marker
             key={photo.id}
             position={[photo.lat, photo.lng]}
             icon={icon}
             eventHandlers={{
-              click: () =>
-                onPhotoMarkerClick && onPhotoMarkerClick(photo),
+              click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
             }}
           >
+            {invalidCoordinatesCount > 0 && (
+              <div style={{ color: "red", marginBottom: "10px" }}>
+                Niektóre zdjęcia nie mają poprawnych współrzędnych i nie mogą
+                zostać wyświetlone na mapie.
+              </div>
+            )}
             {selectedPhotoId === photo.id && (
               <Popup>
                 <div>

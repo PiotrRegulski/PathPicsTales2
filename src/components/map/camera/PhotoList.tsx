@@ -1,11 +1,17 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+type UserPosition = {
+  lat: number;
+  lon: number;
+};
+
 type Photo = {
   id: string;
   imageDataUrl: string;
   description: string;
   timestamp: number;
+  position: UserPosition;
 };
 
 type PhotoListProps = {
@@ -17,7 +23,7 @@ export default function PhotoList({ photos }: PhotoListProps) {
 
   return (
     <div className="photo-list mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
-      {photos.map(({ id, imageDataUrl, description, timestamp }) => (
+      {photos.map(({ id, imageDataUrl, description, timestamp,position }) => (
         <div key={id} className="border rounded p-2 shadow">
           <Image
             src={imageDataUrl}
@@ -31,6 +37,11 @@ export default function PhotoList({ photos }: PhotoListProps) {
           <small className="text-gray-500">
             {new Date(timestamp).toLocaleString()}
           </small>
+            {position && (
+            <small className="text-gray-400 block">
+              Pozycja: {position.lat.toFixed(5)}, {position.lon.toFixed(5)}
+            </small>
+          )}
         </div>
       ))}
     </div>

@@ -5,7 +5,7 @@ import type { UserPosition } from "@/components/map/types";
 type PhotoInputProps = {
   isTracking: boolean;
   userPosition: UserPosition | null;
-  onAddPhoto: (imageDataUrl: string, description: string) => void;
+  onAddPhoto: (imageDataUrl: string, description: string, position: UserPosition | null) => void;
 };
 
 export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: PhotoInputProps) {
@@ -19,7 +19,7 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
     const reader = new FileReader();
     reader.onload = () => {
       const imageDataUrl = reader.result as string;
-      onAddPhoto(imageDataUrl, description.trim());
+      onAddPhoto(imageDataUrl, description.trim(),userPosition);
       setDescription("");
     };
     reader.readAsDataURL(file);
