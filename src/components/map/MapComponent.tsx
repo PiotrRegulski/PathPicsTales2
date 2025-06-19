@@ -94,7 +94,7 @@ useEffect(() => {
 
 // Obsługa przycisku Start w modalu:
 useEffect(() => {
-  if (isLoaded && !resume && !trackName) {
+  if (!isLoaded && !resume && !trackName) {
     setShowTrackNameModal(true);
   }
 }, [isLoaded, resume, trackName]);
