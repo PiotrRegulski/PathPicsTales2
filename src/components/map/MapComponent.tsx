@@ -41,6 +41,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showTrackNameModal, setShowTrackNameModal] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
 
   // Stany dla elapsedTime liczonego tylko podczas ruchu
@@ -55,38 +56,37 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [trackName, setTrackName] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
 
-  useEffect(() => {
-    async function loadOngoingTrack() {
-      if (resume) {
-        const db = await openDB("TravelDB", 2, {
-          upgrade(db) {
-            if (!db.objectStoreNames.contains("tempTracks")) {
-              db.createObjectStore("tempTracks", { keyPath: "id" });
-            }
-            if (!db.objectStoreNames.contains("tracks")) {
-              const store = db.createObjectStore("tracks", { keyPath: "id" });
-              store.createIndex("by-date", "date");
-            }
-          },
-        });
-        const ongoing = await db.get("tempTracks", "ongoing");
-        if (ongoing) {
-          setTrackName(ongoing.trackName || "");
-          setTrack(ongoing.track || []);
-          setPhotos(ongoing.photos || []);
-          setDistance(ongoing.distance || 0);
-
-          setElapsedTime(ongoing.elapsedTime || 0);
-          setTrackName(ongoing.trackName || "");
-          setIsTracking(true);
-          setPausedTime(ongoing.travelTime || 0); // sumuj poprzedni czas
-          setStartTime(Date.now()); // nowy start od wznowienia
-          // NIE ustawiaj travelTime bezpośrednio!
-        }
+useEffect(() => {
+  async function loadOngoingTrack() {
+    if (resume) {
+      const db = await openDB("TravelDB", 2, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("tempTracks")) {
+            db.createObjectStore("tempTracks", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("tracks")) {
+            const store = db.createObjectStore("tracks", { keyPath: "id" });
+            store.createIndex("by-date", "date");
+          }
+        },
+      });
+      const ongoing = await db.get("tempTracks", "ongoing");
+      if (ongoing) {
+        setTrack(ongoing.track || []);
+        setPhotos(ongoing.photos || []);
+        setDistance(ongoing.distance || 0);
+        setElapsedTime(ongoing.elapsedTime || 0);
+        setTrackName(ongoing.trackName || "");
+        setIsTracking(true);
+        setPausedTime(ongoing.travelTime || 0);
+        setStartTime(Date.now());
       }
     }
-    loadOngoingTrack();
-  }, [resume]);
+    setIsLoaded(true); // Ustaw na końcu ładowania!
+  }
+  loadOngoingTrack();
+}, [resume]);
+
 
   // Obsługa modalnego okna do ustawienia nazwy trasy
 // Efekt pokazuje modal tylko na start, jeśli nie ma nazwy i nie trwa śledzenie
@@ -98,7 +98,11 @@ useEffect(() => {
 }, [trackName, isTracking]);
 
 // Obsługa przycisku Start w modalu:
-
+useEffect(() => {
+  if (isLoaded && !resume && !trackName) {
+    setShowTrackNameModal(true);
+  }
+}, [isLoaded, resume, trackName]);
 
 
 //
