@@ -1,30 +1,112 @@
-"use client";
-import { useMap } from "react-leaflet";
-import { useEffect } from "react";
-import type { Photo } from "@/components/Tracks/types";
+import React from "react";
+import {
+  MapContainer,
+  TileLayer,
+  
+  Marker,
+  Popup,
+  
+} from "react-leaflet";
+import L from "leaflet";
+import Image from "next/image";
+import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Adjust the import path as necessary
 
-type MapBoundsAdjusterProps = {
-  markers: Photo[];
-  defaultZoom?: number;
+type UserPosition = {
+  lat: number;
+  lon: number;
 };
 
-const MapBoundsAdjuster: React.FC<MapBoundsAdjusterProps> = ({ markers, defaultZoom = 13 }) => {
-  const map = useMap();
+type Photo = {
+  id: string;
+  imageDataUrl: string;
+  description: string;
+  position: UserPosition;
+  timestamp: number;
+};
 
-  useEffect(() => {
-    if (markers.length === 0) return;
+type MapViewProps = {
+  track: UserPosition[];
+  photoMarkers: Photo[];
+  selectedPhotoId?: string | null;
+  onPhotoMarkerClick?: (photo: Photo) => void;
+};
 
-    if (markers.length === 1) {
-      // Jeden marker – ustaw widok na ten punkt
-      map.setView([markers[0].position.lat, markers[0].position.lon], defaultZoom);
-    } else {
-      // Dwa lub więcej markerów – dopasuj widok do wszystkich
-      const bounds: [number, number][] = markers.map(m => [m.position.lat, m.position.lon]);
-      map.fitBounds(bounds, { padding: [20, 20] });
+const MapView: React.FC<MapViewProps> = ({
+  track,
+  photoMarkers,
+  selectedPhotoId,
+  onPhotoMarkerClick,
+}) => {
+  if (
+    !track ||
+    track.length === 0 ||
+    typeof track[0].lat !== "number" ||
+    typeof track[0].lon !== "number"
+  ) {
+    return <p>Brak poprawnych danych trasy do wyświetlenia na mapie.</p>;
+  }
+
+  const icon = new L.Icon({
+    iconUrl: "/img/photoIcon.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
+
+  return (
+ <MapContainer
+  center={
+    photoMarkers && photoMarkers.length > 0
+      ? [photoMarkers[0].position.lat, photoMarkers[0].position.lon]
+      : [track[0].lat, track[0].lon]
+  }
+  zoom={13}
+  style={{ height: "100%", width: "100%" }}
+>
+  <TileLayer
+    attribution="&copy; OpenStreetMap contributors"
+    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  />
+  <MapBoundsAdjuster markers={photoMarkers} />
+  {/* Usuwamy Polyline */}
+  {photoMarkers.map((photo) => {
+    if (
+      !photo.position ||
+      typeof photo.position.lat !== "number" ||
+      typeof photo.position.lon !== "number"
+    ) {
+      return null;
     }
-  }, [markers, map, defaultZoom]);
+    return (
+      <Marker
+        key={photo.id}
+        position={[photo.position.lat, photo.position.lon]}
+        icon={icon}
+        eventHandlers={{
+          click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
+        }}
+      >
+        {selectedPhotoId === photo.id && (
+          <Popup>
+            <div>
+              <Image
+                src={photo.imageDataUrl}
+                alt={photo.description}
+                width={100}
+                height={100}
+              />
+              <p>{photo.description}</p>
+              <small>
+                Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
+              </small>
+            </div>
+          </Popup>
+        )}
+      </Marker>
+    );
+  })}
+</MapContainer>
 
-  return null;
+  );
 };
 
-export default MapBoundsAdjuster;
+export default MapView;

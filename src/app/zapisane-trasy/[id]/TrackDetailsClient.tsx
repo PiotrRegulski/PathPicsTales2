@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { openDB } from "idb";
 import dynamic from "next/dynamic";
 import PhotoList from "@/components/Tracks/PhotoList";
-import type { Track} from "@/components/Tracks/types";
+import type { Track } from "@/components/Tracks/types";
 import type { Photo } from "@/components/map/types";
 
 // Dynamiczny import mapy (SSR off)
@@ -26,28 +26,30 @@ export default function TrackDetailsClient({ id }: Props) {
 
     (async () => {
       const db = await openDB("TravelDB", 2);
-      const t = await db.get("tracks", id);
-      setTrack(t);
+      // Rzutowanie na Track, bo IndexedDB zwraca any
+      const t = (await db.get("tracks", id)) as Track | undefined;
+      setTrack(t ?? null);
     })();
   }, [id]);
 
-  if (!track || !track.photos) {
+  // Sprawdzamy, czy track i jego pola są poprawne
+  if (
+    !track ||
+    !Array.isArray(track.photos) ||
+    !Array.isArray(track.track)
+  ) {
     return <p>Ładowanie...</p>;
   }
 
-  // Przekazujemy track jako tablicę obiektów {lat, lon}
-  // oraz zdjęcia z pozycją w polu position
   return (
-    <div className="flex flex-col w-full justify-center items-center mx-auto h-screen" >
+    <div className="flex flex-col w-full justify-center items-center mx-auto h-screen">
       <div className="w-full max-w-2xl mx-auto border rounded-lg shadow mb-4 overflow-hidden">
-      <MapView
-        // przekazujemy track bez zmian, MapView musi obsłużyć [{lat, lon}]
-        track={track.track}
-        // przekazujemy zdjęcia bez zmian, MapView musi obsłużyć photo.position
-        photoMarkers={track.photos}
-        selectedPhotoId={selectedPhoto ? selectedPhoto.id : null}
-        onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
-      />
+        <MapView
+          track={track.track}
+          photoMarkers={track.photos}
+          selectedPhotoId={selectedPhoto ? selectedPhoto.id : null}
+          onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
+        />
       </div>
       <PhotoList
         photos={track.photos}
