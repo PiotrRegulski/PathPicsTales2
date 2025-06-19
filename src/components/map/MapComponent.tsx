@@ -1,25 +1,23 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
-// import SetTrackName from "./SetTrackName";
 import PhotoInput from "./camera/PhotoInput";
 import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
 import TrackAutoSaver from "./TrackAutoSaver";
 import { openDB } from "idb";
 import KalmanFilter from "kalmanjs";
-import { useRef } from "react";
 import TrackNameModal from "./TrackNameModal";
 import type { Photo } from "@/components/map/types";
+
 type UserPosition = {
   lat: number;
   lon: number;
 };
-
 
 type MapComponentProps = {
   resume?: boolean;
@@ -43,78 +41,130 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [showTrackNameModal, setShowTrackNameModal] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
-
   // Stany dla elapsedTime liczonego tylko podczas ruchu
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [elapsedStart, setElapsedStart] = useState<number | null>(null);
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
-  //Kalman filter for smoothing GPS data
 
+  // Kalman filter for smoothing GPS data
   const latFilter = useRef(new KalmanFilter());
   const lonFilter = useRef(new KalmanFilter());
 
   const [trackName, setTrackName] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
 
-useEffect(() => {
-  async function loadOngoingTrack() {
-    if (resume) {
-      const db = await openDB("TravelDB", 2, {
-        upgrade(db) {
-          if (!db.objectStoreNames.contains("tempTracks")) {
-            db.createObjectStore("tempTracks", { keyPath: "id" });
-          }
-          if (!db.objectStoreNames.contains("tracks")) {
-            const store = db.createObjectStore("tracks", { keyPath: "id" });
-            store.createIndex("by-date", "date");
-          }
-        },
-      });
-      const ongoing = await db.get("tempTracks", "ongoing");
-      if (ongoing) {
-        setTrack(ongoing.track || []);
-        setPhotos(ongoing.photos || []);
-        setDistance(ongoing.distance || 0);
-        setElapsedTime(ongoing.elapsedTime || 0);
-        setTrackName(ongoing.trackName || "");
-        setIsTracking(true);
-        setPausedTime(ongoing.travelTime || 0);
-        setStartTime(Date.now());
-      }
-    }
-    setIsLoaded(true); // Ustaw na końcu ładowania!
-  }
-  loadOngoingTrack();
-}, [resume]);
+  // Stan oczekiwania na dokładną pozycję GPS
+  const [isWaitingForAccuratePosition, setIsWaitingForAccuratePosition] = useState(false);
 
+  // Funkcja pobierająca pozycję GPS o wysokiej dokładności
+  const getAccuratePosition = (maxAttempts = 5): Promise<GeolocationPosition> => {
+    let attempts = 0;
+    return new Promise((resolve, reject) => {
+      const tryGetPosition = () => {
+        if (!("geolocation" in navigator)) {
+          reject(new Error("Geolokalizacja nie jest dostępna"));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            if (position.coords.accuracy <= MAX_ACCURACY) {
+              resolve(position);
+            } else {
+              attempts++;
+              if (attempts < maxAttempts) {
+                setTimeout(tryGetPosition, 1000);
+              } else {
+                reject(
+                  new Error(
+                    `Nie udało się uzyskać dokładnej pozycji GPS (dokładność: ${Math.round(
+                      position.coords.accuracy
+                    )} m)`
+                  )
+                );
+              }
+            }
+          },
+          (error: GeolocationPositionError) => reject(error),
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      };
+      tryGetPosition();
+    });
+  };
+
+  // Ładowanie trwającej trasy z IndexedDB, jeśli wznawiamy (resume)
+  useEffect(() => {
+    async function loadOngoingTrack() {
+      if (resume) {
+        const db = await openDB("TravelDB", 2, {
+          upgrade(db) {
+            if (!db.objectStoreNames.contains("tempTracks")) {
+              db.createObjectStore("tempTracks", { keyPath: "id" });
+            }
+            if (!db.objectStoreNames.contains("tracks")) {
+              const store = db.createObjectStore("tracks", { keyPath: "id" });
+              store.createIndex("by-date", "date");
+            }
+          },
+        });
+        const ongoing = await db.get("tempTracks", "ongoing");
+        if (ongoing) {
+          setTrack(ongoing.track || []);
+          setPhotos(ongoing.photos || []);
+          setDistance(ongoing.distance || 0);
+          setElapsedTime(ongoing.elapsedTime || 0);
+          setTrackName(ongoing.trackName || "");
+          setIsTracking(true);
+          setPausedTime(ongoing.travelTime || 0);
+          setStartTime(Date.now());
+        }
+      }
+      setIsLoaded(true);
+    }
+    loadOngoingTrack();
+  }, [resume]);
 
   // Obsługa modalnego okna do ustawienia nazwy trasy
-// Efekt pokazuje modal tylko na start, jeśli nie ma nazwy i nie trwa śledzenie
-
-
-// Obsługa przycisku Start w modalu:
-useEffect(() => {
-  if (isLoaded) {
-    if (resume && trackName) {
-      setShowTrackNameModal(false); // Kontynuujesz trasę z nazwą – zamknij modal!
-    } else if (!resume && !trackName) {
-      setShowTrackNameModal(true); // Nowa trasa bez nazwy – pokaż modal!
+  useEffect(() => {
+    if (isLoaded) {
+      if (resume && trackName) {
+        setShowTrackNameModal(false);
+      } else if (!resume && !trackName) {
+        setShowTrackNameModal(true);
+      }
     }
-    // W innych przypadkach nie zmieniaj stanu modalu
-  }
-}, [isLoaded, resume, trackName]);
+  }, [isLoaded, resume, trackName]);
 
+  // Rozpoczęcie śledzenia po ustawieniu nazwy trasy (z oczekiwaniem na dokładną pozycję)
+  const handleStartTracking = async () => {
+    setShowTrackNameModal(false);
+    setIsWaitingForAccuratePosition(true);
+    setGpsError(null);
 
+    try {
+      const position = await getAccuratePosition();
+      const filteredLat = latFilter.current.filter(position.coords.latitude);
+      const filteredLon = lonFilter.current.filter(position.coords.longitude);
+      const newPosition = { lat: filteredLat, lon: filteredLon };
+      setUserPosition(newPosition);
 
-//
-  // Funkcja do obsługi rozpoczęcia śledzenia po ustawieniu nazwy trasy
-const handleStartTracking = () => {
-  setShowTrackNameModal(false);
-  setIsTracking(true);
-  setStartTime(Date.now());
-  // ...ewentualnie inne akcje przy starcie
-};
-  // Pobranie początkowej pozycji
+      setIsTracking(true);
+      setStartTime(Date.now());
+      setTrack([newPosition]);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setGpsError(error.message);
+      } else if (typeof error === "object" && error && "message" in error) {
+        setGpsError(String((error as { message: string }).message));
+      } else {
+        setGpsError("Nieznany błąd GPS");
+      }
+    } finally {
+      setIsWaitingForAccuratePosition(false);
+    }
+  };
+
+  // Pobranie początkowej pozycji (do wyświetlenia mapy, nie do śledzenia!)
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -124,13 +174,15 @@ const handleStartTracking = () => {
             lon: position.coords.longitude,
           });
         },
-        (error) => {
+        (error: GeolocationPositionError) => {
           setGpsError(error.message);
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
   }, []);
+
+  // Aktualizacja travelTime (całkowity czas trwania śledzenia)
   useEffect(() => {
     if (!isTracking || !startTime) return;
     const interval = setInterval(() => {
@@ -148,7 +200,6 @@ const handleStartTracking = () => {
         (position) => {
           setGpsError(null);
           if (position.coords.accuracy <= MAX_ACCURACY) {
-            // Użyj filtra Kalmana!
             const filteredLat = latFilter.current.filter(
               position.coords.latitude
             );
@@ -211,7 +262,7 @@ const handleStartTracking = () => {
             );
           }
         },
-        (error) => {
+        (error: GeolocationPositionError) => {
           setGpsError(error.message);
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
@@ -255,15 +306,6 @@ const handleStartTracking = () => {
     return () => clearInterval(interval);
   }, [elapsedStart, pausedElapsed]);
 
-  // Aktualizacja travelTime (całkowity czas trwania śledzenia)
-  useEffect(() => {
-    if (!isTracking || !startTime) return;
-    const interval = setInterval(() => {
-      setTravelTime(pausedTime + Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isTracking, startTime, pausedTime]);
-
   // Dodaj obsługę dodawania zdjęć:
   const handleAddPhoto = (imageDataUrl: string, description: string) => {
     if (!userPosition) return;
@@ -277,15 +319,12 @@ const handleStartTracking = () => {
     setPhotos((prev) => [...prev, newPhoto]);
   };
 
-  // Obsługa start/pauza śledzenia
-  const handleStartPause = () => {
-    
+  // Obsługa start/pauza śledzenia z oczekiwaniem na dokładną pozycję przy wznowieniu
+  const handleStartPause = async () => {
     if (isTracking) {
-      // Pauzujemy śledzenie
       setIsTracking(false);
       setSpeed(0);
 
-      // Sumujemy czas od ostatniego wznowienia do pauzy
       if (startTime) {
         setPausedTime(
           (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
@@ -293,7 +332,6 @@ const handleStartTracking = () => {
         setStartTime(null);
       }
 
-      // Pauzujemy licznik czasu w ruchu
       if (elapsedStart) {
         setPausedElapsed(
           (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
@@ -301,45 +339,32 @@ const handleStartTracking = () => {
         setElapsedStart(null);
       }
     } else {
-      // Wznawiamy śledzenie
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const filteredLat = latFilter.current.filter(
-              position.coords.latitude
-            );
-            const filteredLon = lonFilter.current.filter(
-              position.coords.longitude
-            );
-            const newPosition = {
-              lat: filteredLat,
-              lon: filteredLon,
-            };
-            setUserPosition(newPosition);
+      setIsWaitingForAccuratePosition(true);
+      setGpsError(null);
 
-            setIsTracking(true);
+      try {
+        const position = await getAccuratePosition();
+        const filteredLat = latFilter.current.filter(position.coords.latitude);
+        const filteredLon = lonFilter.current.filter(position.coords.longitude);
+        const newPosition = { lat: filteredLat, lon: filteredLon };
+        setUserPosition(newPosition);
 
-            // startTime ustawiamy zawsze na nowy moment wznowienia
-            setStartTime(Date.now());
-
-            // Dodaj pierwszy punkt do trasy tylko jeśli trasa jest pusta (nowa trasa)
-            if (track.length === 0) {
-              setTrack([newPosition]);
-            }
-          },
-          (error) => {
-            setGpsError(error.message);
-            setIsTracking(true);
-            setStartTime(Date.now());
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      } else {
         setIsTracking(true);
         setStartTime(Date.now());
-        if (track.length === 0 && userPosition) {
-          setTrack([userPosition]);
+
+        if (track.length === 0) {
+          setTrack([newPosition]);
         }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setGpsError(error.message);
+        } else if (typeof error === "object" && error && "message" in error) {
+          setGpsError(String((error as { message: string }).message));
+        } else {
+          setGpsError("Nieznany błąd GPS");
+        }
+      } finally {
+        setIsWaitingForAccuratePosition(false);
       }
     }
   };
@@ -362,11 +387,11 @@ const handleStartTracking = () => {
   return (
     <div className="flex flex-col items-center p-4">
       <TrackNameModal
-  isOpen={showTrackNameModal}
-  trackName={trackName}
-  setTrackName={setTrackName}
-  onStart={handleStartTracking}
-/>
+        isOpen={showTrackNameModal}
+        trackName={trackName}
+        setTrackName={setTrackName}
+        onStart={handleStartTracking}
+      />
       <TrackAutoSaver
         track={track}
         photos={photos}
@@ -376,19 +401,18 @@ const handleStartTracking = () => {
         trackName={trackName}
         isTracking={isTracking}
       />
+      {/* Komunikat o oczekiwaniu na dokładną pozycję */}
+      {isWaitingForAccuratePosition && (
+        <p className="text-center text-blue-600">Czekam na dokładną pozycję GPS...</p>
+      )}
       {userPosition ? (
         <>
-         <h2 className="text-black font-semibold text-xl">{trackName}</h2>
+          <h2 className="text-black font-semibold text-xl">{trackName}</h2>
           <MapView
             userPosition={userPosition}
             track={track}
             autoCenter={autoCenter}
           />
-             {/* <SetTrackName
-            trackName={trackName}
-            setTrackName={setTrackName}
-            disabled={isTracking}
-          /> */}
           <ControlPanel
             isTracking={isTracking}
             onStartPause={handleStartPause}
@@ -401,7 +425,6 @@ const handleStartTracking = () => {
             elapsedTime={elapsedTime}
             trackName={trackName}
           />
-        
           <StatsPanel
             speed={speed}
             distance={distance}
@@ -422,9 +445,7 @@ const handleStartTracking = () => {
             elapsedTime={elapsedTime}
             photos={photos}
             onReset={() => {
-              // resetuj wszystko, w tym zdjęcia
               setPhotos([]);
-              // inne resety jak w handleReset
             }}
           />
           <GpsError error={gpsError} />
