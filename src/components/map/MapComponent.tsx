@@ -88,12 +88,17 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     loadOngoingTrack();
   }, [resume]);
 
-  useEffect(() => {
-  if (!trackName) {
+  // Obsługa modalnego okna do ustawienia nazwy trasy
+useEffect(() => {
+  if (!trackName && !isTracking) {
     setShowTrackNameModal(true);
+  } else {
+    setShowTrackNameModal(false);
   }
-}, [trackName]);
+}, [trackName, isTracking]);
 
+//
+  // Funkcja do obsługi rozpoczęcia śledzenia po ustawieniu nazwy trasy
 const handleStartTracking = () => {
   setShowTrackNameModal(false);
   setIsTracking(true);
