@@ -1,4 +1,6 @@
 "use client";
+import useWakeLock from "@/components/map/useWakeLock";
+
 import { useEffect, useState, useRef } from "react";
 import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
@@ -56,6 +58,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   // Stan oczekiwania na dokładną pozycję GPS
   const [isWaitingForAccuratePosition, setIsWaitingForAccuratePosition] = useState(false);
 
+  
   // Funkcja pobierająca pozycję GPS o wysokiej dokładności
   const getAccuratePosition = (maxAttempts = 5): Promise<GeolocationPosition> => {
     let attempts = 0;
@@ -318,7 +321,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     };
     setPhotos((prev) => [...prev, newPhoto]);
   };
-
+useWakeLock(isTracking);
   // Obsługa start/pauza śledzenia z oczekiwaniem na dokładną pozycję przy wznowieniu
   const handleStartPause = async () => {
     if (isTracking) {
