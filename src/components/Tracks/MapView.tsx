@@ -2,7 +2,7 @@ import React from "react";
 import {
   MapContainer,
   TileLayer,
-  Polyline,
+  
   Marker,
   Popup,
   
@@ -52,53 +52,58 @@ const MapView: React.FC<MapViewProps> = ({
   });
 
   return (
-    <MapContainer
-      center={[track[0].lat, track[0].lon]}
-      zoom={13}
-      style={{ height: "100%", width: "100%" }}
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap contributors"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <Polyline positions={track.map((p) => [p.lat, p.lon])} color="blue" />
-      {photoMarkers.map((photo) => {
-        if (
-          !photo.position ||
-          typeof photo.position.lat !== "number" ||
-          typeof photo.position.lon !== "number"
-        ) {
-          return null;
-        }
-        return (
-          <Marker
-            key={photo.id}
-            position={[photo.position.lat, photo.position.lon]}
-            icon={icon}
-            eventHandlers={{
-              click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
-            }}
-          >
-            {selectedPhotoId === photo.id && (
-              <Popup>
-                <div>
-                  <Image
-                    src={photo.imageDataUrl}
-                    alt={photo.description}
-                    width={100}
-                    height={100}
-                  />
-                  <p>{photo.description}</p>
-                  <small>
-                    Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
-                  </small>
-                </div>
-              </Popup>
-            )}
-          </Marker>
-        );
-      })}
-    </MapContainer>
+ <MapContainer
+  center={
+    photoMarkers && photoMarkers.length > 0
+      ? [photoMarkers[0].position.lat, photoMarkers[0].position.lon]
+      : [track[0].lat, track[0].lon]
+  }
+  zoom={13}
+  style={{ height: "100%", width: "100%" }}
+>
+  <TileLayer
+    attribution="&copy; OpenStreetMap contributors"
+    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  />
+  {/* Usuwamy Polyline */}
+  {photoMarkers.map((photo) => {
+    if (
+      !photo.position ||
+      typeof photo.position.lat !== "number" ||
+      typeof photo.position.lon !== "number"
+    ) {
+      return null;
+    }
+    return (
+      <Marker
+        key={photo.id}
+        position={[photo.position.lat, photo.position.lon]}
+        icon={icon}
+        eventHandlers={{
+          click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
+        }}
+      >
+        {selectedPhotoId === photo.id && (
+          <Popup>
+            <div>
+              <Image
+                src={photo.imageDataUrl}
+                alt={photo.description}
+                width={100}
+                height={100}
+              />
+              <p>{photo.description}</p>
+              <small>
+                Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
+              </small>
+            </div>
+          </Popup>
+        )}
+      </Marker>
+    );
+  })}
+</MapContainer>
+
   );
 };
 
