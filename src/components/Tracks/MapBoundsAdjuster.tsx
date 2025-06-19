@@ -8,7 +8,7 @@ type MapBoundsAdjusterProps = {
   defaultZoom?: number;
 };
 
-const MapBoundsAdjuster: React.FC<MapBoundsAdjusterProps> = ({ markers, defaultZoom = 13 }) => {
+const MapBoundsAdjuster: React.FC<MapBoundsAdjusterProps> = ({ markers, defaultZoom = 10 }) => {
   const map = useMap();
 
   useEffect(() => {

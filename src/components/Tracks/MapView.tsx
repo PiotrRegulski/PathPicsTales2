@@ -59,7 +59,7 @@ const MapView: React.FC<MapViewProps> = ({
       ? [photoMarkers[0].position.lat, photoMarkers[0].position.lon]
       : [track[0].lat, track[0].lon]
   }
-  zoom={13}
+  zoom={10}
   style={{ height: "100%", width: "100%" }}
 >
   <TileLayer
