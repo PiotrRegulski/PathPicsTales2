@@ -1,6 +1,6 @@
 "use client";
 import useWakeLock from "@/components/map/useWakeLock";
-
+import ScreenLock from "@/components/map/ScreenLock";
 import { useEffect, useState, useRef } from "react";
 import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
@@ -15,6 +15,7 @@ import { openDB } from "idb";
 import KalmanFilter from "kalmanjs";
 import TrackNameModal from "./TrackNameModal";
 import type { Photo } from "@/components/map/types";
+import ScreenLockButton from "./ScreenLockButton";
 
 type UserPosition = {
   lat: number;
@@ -42,6 +43,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showTrackNameModal, setShowTrackNameModal] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [screenLocked, setScreenLocked] = useState(false);
 
   // Stany dla elapsedTime liczonego tylko podczas ruchu
   const [elapsedTime, setElapsedTime] = useState<number>(0);
@@ -389,6 +391,7 @@ useWakeLock(isTracking);
 
   return (
     <div className="flex flex-col items-center p-4">
+
       <TrackNameModal
         isOpen={showTrackNameModal}
         trackName={trackName}
@@ -408,6 +411,7 @@ useWakeLock(isTracking);
       {isWaitingForAccuratePosition && (
         <p className="text-center text-blue-600">Czekam na dokładną pozycję GPS...</p>
       )}
+      <ScreenLock active={screenLocked} onUnlock={() => setScreenLocked(false)} />
       {userPosition ? (
         <>
           <h2 className="text-black font-semibold text-xl">{trackName}</h2>
@@ -456,6 +460,10 @@ useWakeLock(isTracking);
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>
       )}
+       {/* Przycisk do blokowania ekranu */}
+      <ScreenLockButton onLock={() => setScreenLocked(true)} />
+          {/* Komponent blokady ekranu */}
+      <ScreenLock active={screenLocked} onUnlock={() => setScreenLocked(false)} />
     </div>
   );
 };
