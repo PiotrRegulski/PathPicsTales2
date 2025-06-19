@@ -5,7 +5,7 @@ import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
-import SetTrackName from "./SetTrackName";
+// import SetTrackName from "./SetTrackName";
 import PhotoInput from "./camera/PhotoInput";
 import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
@@ -13,6 +13,7 @@ import TrackAutoSaver from "./TrackAutoSaver";
 import { openDB } from "idb";
 import KalmanFilter from "kalmanjs";
 import { useRef } from "react";
+import TrackNameModal from "./TrackNameModal";
 import type { Photo } from "@/components/map/types";
 type UserPosition = {
   lat: number;
@@ -39,6 +40,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [autoCenter, setAutoCenter] = useState<boolean>(true);
   const [isTracking, setIsTracking] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [showTrackNameModal, setShowTrackNameModal] = useState(true);
+
 
   // Stany dla elapsedTime liczonego tylko podczas ruchu
   const [elapsedTime, setElapsedTime] = useState<number>(0);
@@ -84,6 +87,18 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     loadOngoingTrack();
   }, [resume]);
 
+  useEffect(() => {
+  if (!trackName) {
+    setShowTrackNameModal(true);
+  }
+}, [trackName]);
+
+const handleStartTracking = () => {
+  setShowTrackNameModal(false);
+  setIsTracking(true);
+  setStartTime(Date.now());
+  // ...ewentualnie inne akcje przy starcie
+};
   // Pobranie początkowej pozycji
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -249,6 +264,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   // Obsługa start/pauza śledzenia
   const handleStartPause = () => {
+    
     if (isTracking) {
       // Pauzujemy śledzenie
       setIsTracking(false);
@@ -330,6 +346,12 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   return (
     <div className="flex flex-col items-center p-4">
+      <TrackNameModal
+  isOpen={showTrackNameModal}
+  trackName={trackName}
+  setTrackName={setTrackName}
+  onStart={handleStartTracking}
+/>
       <TrackAutoSaver
         track={track}
         photos={photos}
@@ -341,16 +363,17 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       />
       {userPosition ? (
         <>
-          <SetTrackName
-            trackName={trackName}
-            setTrackName={setTrackName}
-            disabled={isTracking}
-          />
+         <h2 className="text-black font-semibold text-xl">{trackName}</h2>
           <MapView
             userPosition={userPosition}
             track={track}
             autoCenter={autoCenter}
           />
+             {/* <SetTrackName
+            trackName={trackName}
+            setTrackName={setTrackName}
+            disabled={isTracking}
+          /> */}
           <ControlPanel
             isTracking={isTracking}
             onStartPause={handleStartPause}
@@ -363,7 +386,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             elapsedTime={elapsedTime}
             trackName={trackName}
           />
-
+        
           <StatsPanel
             speed={speed}
             distance={distance}
