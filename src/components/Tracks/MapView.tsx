@@ -9,6 +9,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import Image from "next/image";
+import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Adjust the import path as necessary
 
 type UserPosition = {
   lat: number;
@@ -65,6 +66,7 @@ const MapView: React.FC<MapViewProps> = ({
     attribution="&copy; OpenStreetMap contributors"
     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   />
+  <MapBoundsAdjuster markers={photoMarkers} />
   {/* Usuwamy Polyline */}
   {photoMarkers.map((photo) => {
     if (
