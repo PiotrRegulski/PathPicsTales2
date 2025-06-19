@@ -1,3 +1,4 @@
+"use client";
 import { useMap } from "react-leaflet";
 import { useEffect } from "react";
 import type { Photo } from "@/components/Tracks/types";
