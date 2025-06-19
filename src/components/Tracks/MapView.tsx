@@ -54,12 +54,8 @@ const MapView: React.FC<MapViewProps> = ({
 
   return (
  <MapContainer
-  center={
-    photoMarkers && photoMarkers.length > 0
-      ? [photoMarkers[0].position.lat, photoMarkers[0].position.lon]
-      : [track[0].lat, track[0].lon]
-  }
-  zoom={10}
+   center={[52.2297, 21.0122]} // domyślne centrum (Warszawa)
+  zoom={6} // domyślny, szeroki zoom
   style={{ height: "100%", width: "100%" }}
 >
   <TileLayer
