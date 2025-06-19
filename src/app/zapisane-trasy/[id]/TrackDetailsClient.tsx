@@ -38,7 +38,8 @@ export default function TrackDetailsClient({ id }: Props) {
   // Przekazujemy track jako tablicę obiektów {lat, lon}
   // oraz zdjęcia z pozycją w polu position
   return (
-    <div>
+    <div className="flex flex-col w-full justify-center items-center mx-auto h-screen" >
+      <div className="w-full max-w-2xl mx-auto border rounded-lg shadow mb-4 overflow-hidden">
       <MapView
         // przekazujemy track bez zmian, MapView musi obsłużyć [{lat, lon}]
         track={track.track}
@@ -47,6 +48,7 @@ export default function TrackDetailsClient({ id }: Props) {
         selectedPhotoId={selectedPhoto ? selectedPhoto.id : null}
         onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
       />
+      </div>
       <PhotoList
         photos={track.photos}
         onPhotoClick={(photo) => setSelectedPhoto(photo)}

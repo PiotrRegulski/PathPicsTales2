@@ -46,7 +46,7 @@ const MapView: React.FC<MapViewProps> = ({
   }
 
   const icon = new L.Icon({
-    iconUrl: "/marker-icon.png",
+    iconUrl: "/img/photoIcon.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
   });
@@ -55,7 +55,7 @@ const MapView: React.FC<MapViewProps> = ({
     <MapContainer
       center={[track[0].lat, track[0].lon]}
       zoom={13}
-      style={{ height: "400px", width: "100%" }}
+      style={{ height: "100%", width: "100%" }}
     >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"
