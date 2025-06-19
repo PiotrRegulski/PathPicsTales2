@@ -54,7 +54,7 @@ const MapView: React.FC<MapViewProps> = ({
     <MapContainer
       center={[52.2297, 21.0122]} // domyślne centrum, np. Warszawa
       zoom={6} // domyślny, szeroki zoom
-      style={{ height: "100%", width: "100%" }}
+      style={{ height: "400px", width: "100%" }}
     >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"
