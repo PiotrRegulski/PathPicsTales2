@@ -2,14 +2,12 @@ import React from "react";
 import {
   MapContainer,
   TileLayer,
-  
   Marker,
   Popup,
-  
 } from "react-leaflet";
 import L from "leaflet";
 import Image from "next/image";
-import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Adjust the import path as necessary
+import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Dostosuj ścieżkę importu do swojego projektu
 
 type UserPosition = {
   lat: number;
@@ -53,55 +51,53 @@ const MapView: React.FC<MapViewProps> = ({
   });
 
   return (
- <MapContainer
-   center={[52.2297, 21.0122]} // domyślne centrum (Warszawa)
-  zoom={6} // domyślny, szeroki zoom
-  style={{ height: "100%", width: "100%" }}
->
-  <TileLayer
-    attribution="&copy; OpenStreetMap contributors"
-    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-  />
-  <MapBoundsAdjuster markers={photoMarkers} />
-  {/* Usuwamy Polyline */}
-  {photoMarkers.map((photo) => {
-    if (
-      !photo.position ||
-      typeof photo.position.lat !== "number" ||
-      typeof photo.position.lon !== "number"
-    ) {
-      return null;
-    }
-    return (
-      <Marker
-        key={photo.id}
-        position={[photo.position.lat, photo.position.lon]}
-        icon={icon}
-        eventHandlers={{
-          click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
-        }}
-      >
-        {selectedPhotoId === photo.id && (
-          <Popup>
-            <div>
-              <Image
-                src={photo.imageDataUrl}
-                alt={photo.description}
-                width={100}
-                height={100}
-              />
-              <p>{photo.description}</p>
-              <small>
-                Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
-              </small>
-            </div>
-          </Popup>
-        )}
-      </Marker>
-    );
-  })}
-</MapContainer>
-
+    <MapContainer
+      center={[52.2297, 21.0122]} // domyślne centrum, np. Warszawa
+      zoom={6} // domyślny, szeroki zoom
+      style={{ height: "100%", width: "100%" }}
+    >
+      <TileLayer
+        attribution="&copy; OpenStreetMap contributors"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <MapBoundsAdjuster markers={photoMarkers} />
+      {photoMarkers.map((photo) => {
+        if (
+          !photo.position ||
+          typeof photo.position.lat !== "number" ||
+          typeof photo.position.lon !== "number"
+        ) {
+          return null;
+        }
+        return (
+          <Marker
+            key={photo.id}
+            position={[photo.position.lat, photo.position.lon]}
+            icon={icon}
+            eventHandlers={{
+              click: () => onPhotoMarkerClick && onPhotoMarkerClick(photo),
+            }}
+          >
+            {selectedPhotoId === photo.id && (
+              <Popup>
+                <div>
+                  <Image
+                    src={photo.imageDataUrl}
+                    alt={photo.description}
+                    width={100}
+                    height={100}
+                  />
+                  <p>{photo.description}</p>
+                  <small>
+                    Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}
+                  </small>
+                </div>
+              </Popup>
+            )}
+          </Marker>
+        );
+      })}
+    </MapContainer>
   );
 };
 

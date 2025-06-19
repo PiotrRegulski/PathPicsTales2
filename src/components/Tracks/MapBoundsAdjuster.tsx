@@ -1,28 +1,36 @@
-"use client";
+'use client';
+
 import { useMap } from "react-leaflet";
 import { useEffect } from "react";
-import type { Photo } from "@/components/Tracks/types";
+import type { Photo } from "@/components/Tracks/types"; // Dostosuj ścieżkę importu do swojego projektu
 
 type MapBoundsAdjusterProps = {
   markers: Photo[];
-  defaultZoom?: number;
+  singleZoom?: number;
 };
 
-const MapBoundsAdjuster: React.FC<MapBoundsAdjusterProps> = ({ markers, defaultZoom = 10 }) => {
+const MapBoundsAdjuster: React.FC<MapBoundsAdjusterProps> = ({
+  markers,
+  singleZoom = 13,
+}) => {
   const map = useMap();
 
   useEffect(() => {
-    if (markers.length === 0) return;
+    if (!markers || markers.length === 0) return;
 
     if (markers.length === 1) {
-      // Jeden marker – ustaw widok na ten punkt
-      map.setView([markers[0].position.lat, markers[0].position.lon], defaultZoom);
+      map.setView(
+        [markers[0].position.lat, markers[0].position.lon],
+        singleZoom
+      );
     } else {
-      // Dwa lub więcej markerów – dopasuj widok do wszystkich
-      const bounds: [number, number][] = markers.map(m => [m.position.lat, m.position.lon]);
-      map.fitBounds(bounds, { padding: [20, 20] });
+      const bounds: [number, number][] = markers.map((m) => [
+        m.position.lat,
+        m.position.lon,
+      ]);
+      map.fitBounds(bounds, { padding: [40, 40] }); // padding poprawia widoczność markerów przy krawędziach
     }
-  }, [markers, map, defaultZoom]);
+  }, [markers, map, singleZoom]);
 
   return null;
 };
