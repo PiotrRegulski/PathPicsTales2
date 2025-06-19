@@ -71,6 +71,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
         });
         const ongoing = await db.get("tempTracks", "ongoing");
         if (ongoing) {
+          setTrackName(ongoing.trackName || "");
           setTrack(ongoing.track || []);
           setPhotos(ongoing.photos || []);
           setDistance(ongoing.distance || 0);
