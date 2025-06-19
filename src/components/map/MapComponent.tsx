@@ -94,10 +94,16 @@ useEffect(() => {
 
 // Obsługa przycisku Start w modalu:
 useEffect(() => {
-  if (!isLoaded && !resume && !trackName) {
-    setShowTrackNameModal(true);
+  if (isLoaded) {
+    if (resume && trackName) {
+      setShowTrackNameModal(false); // Kontynuujesz trasę z nazwą – zamknij modal!
+    } else if (!resume && !trackName) {
+      setShowTrackNameModal(true); // Nowa trasa bez nazwy – pokaż modal!
+    }
+    // W innych przypadkach nie zmieniaj stanu modalu
   }
 }, [isLoaded, resume, trackName]);
+
 
 
 //
