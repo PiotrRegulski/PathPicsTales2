@@ -89,13 +89,17 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [resume]);
 
   // Obsługa modalnego okna do ustawienia nazwy trasy
+// Efekt pokazuje modal tylko na start, jeśli nie ma nazwy i nie trwa śledzenie
 useEffect(() => {
   if (!trackName && !isTracking) {
     setShowTrackNameModal(true);
-  } else {
-    setShowTrackNameModal(false);
   }
+  // NIE zamykaj modalu automatycznie!
 }, [trackName, isTracking]);
+
+// Obsługa przycisku Start w modalu:
+
+
 
 //
   // Funkcja do obsługi rozpoczęcia śledzenia po ustawieniu nazwy trasy
