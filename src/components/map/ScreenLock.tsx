@@ -11,13 +11,13 @@ const ScreenLock: React.FC<ScreenLockProps> = ({ active, onUnlock }) => {
   return (
     <div
       className="
-        fixed inset-0 w-screen  h-[100dvh]
+        fixed inset-0 w-screen  
         z-[9999]
         bg-black/80
         flex items-center justify-center
         select-none
       "
-      style={{ touchAction: "none", height: "100dvh" }}
+      style={{   paddingBottom: "env(safe-area-inset-bottom)",touchAction: "none"  }}
       // Blokujemy wszystkie kliknięcia poza przyciskiem
       onClick={e => {
         e.stopPropagation();
