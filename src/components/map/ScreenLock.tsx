@@ -1,20 +1,13 @@
-"use client";
 import React from "react";
-import { useEffect } from "react";
+
 type ScreenLockProps = {
   active: boolean;
   onUnlock?: () => void;
 };
 
 const ScreenLock: React.FC<ScreenLockProps> = ({ active, onUnlock }) => {
-  useEffect(() => {
-    if (active) {
-      // Przewiń na górę strony po aktywacji blokady ekranu
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [active]);
-
   if (!active) return null;
+    
   return (
     <div
       className="
@@ -26,11 +19,11 @@ const ScreenLock: React.FC<ScreenLockProps> = ({ active, onUnlock }) => {
       "
       style={{ touchAction: "none", height: "100dvh" }}
       // Blokujemy wszystkie kliknięcia poza przyciskiem
-      onClick={(e) => {
+      onClick={e => {
         e.stopPropagation();
         e.preventDefault();
       }}
-      onTouchStart={(e) => {
+      onTouchStart={e => {
         e.stopPropagation();
         e.preventDefault();
       }}
@@ -47,7 +40,7 @@ const ScreenLock: React.FC<ScreenLockProps> = ({ active, onUnlock }) => {
           active:scale-95
           transition
         "
-        onClick={(e) => {
+        onClick={e => {
           e.stopPropagation();
           e.preventDefault();
           if (onUnlock) onUnlock();

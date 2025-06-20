@@ -470,7 +470,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       <ScreenLockButton
         onLock={() => {
           window.scrollTo({ top: 0, behavior: "smooth" }); // Dodaj to
-          setScreenLocked(true);
+          setTimeout(()=>setScreenLocked(true), 400); // Opóźnienie dla lepszego UX
         }}
       />
       {/* Komponent blokady ekranu */}
