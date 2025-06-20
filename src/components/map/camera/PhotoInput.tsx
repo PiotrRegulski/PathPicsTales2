@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useState } from "react";
 import type { UserPosition } from "@/components/map/types";
+import CameraIcon from "@/components/Icons/CameraIcon";
 
 type PhotoInputProps = {
   isTracking: boolean;
@@ -36,20 +37,20 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
         onChange={handleFileChange}
         disabled={!isTracking}
       />
-      <input
+      {/* <input
         type="text"
         placeholder="Opis zdjęcia"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         disabled={!isTracking}
         className="border rounded px-2 py-1 flex-grow"
-      />
+      /> */}
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={!isTracking}
-        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:opacity-50"
+        className="fixed bottom-4 right-4 z-50 *:bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:opacity-50"
       >
-        Zrób zdjęcie
+        <CameraIcon className="w-6 h-6" />
       </button>
     </div>
   );
