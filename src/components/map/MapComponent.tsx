@@ -469,7 +469,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       {/* Przycisk do blokowania ekranu */}
       <ScreenLockButton
         onLock={() => {
-          window.scrollTo({ top: 0, behavior: "smooth" }); // Dodaj to
+          window.scrollTo({ top: 0, behavior: "auto" }); // Dodaj to
           setTimeout(()=>setScreenLocked(true), 400); // Opóźnienie dla lepszego UX
         }}
       />
