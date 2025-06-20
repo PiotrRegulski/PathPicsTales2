@@ -58,11 +58,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
 
   // Stan oczekiwania na dokładną pozycję GPS
-  const [isWaitingForAccuratePosition, setIsWaitingForAccuratePosition] = useState(false);
+  const [isWaitingForAccuratePosition, setIsWaitingForAccuratePosition] =
+    useState(false);
 
-  
   // Funkcja pobierająca pozycję GPS o wysokiej dokładności
-  const getAccuratePosition = (maxAttempts = 5): Promise<GeolocationPosition> => {
+  const getAccuratePosition = (
+    maxAttempts = 5
+  ): Promise<GeolocationPosition> => {
     let attempts = 0;
     return new Promise((resolve, reject) => {
       const tryGetPosition = () => {
@@ -323,7 +325,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     };
     setPhotos((prev) => [...prev, newPhoto]);
   };
-useWakeLock(isTracking);
+  useWakeLock(isTracking);
   // Obsługa start/pauza śledzenia z oczekiwaniem na dokładną pozycję przy wznowieniu
   const handleStartPause = async () => {
     if (isTracking) {
@@ -391,7 +393,6 @@ useWakeLock(isTracking);
 
   return (
     <div className="flex flex-col items-center p-4">
-
       <TrackNameModal
         isOpen={showTrackNameModal}
         trackName={trackName}
@@ -409,9 +410,14 @@ useWakeLock(isTracking);
       />
       {/* Komunikat o oczekiwaniu na dokładną pozycję */}
       {isWaitingForAccuratePosition && (
-        <p className="text-center text-blue-600">Czekam na dokładną pozycję GPS...</p>
+        <p className="text-center text-blue-600">
+          Czekam na dokładną pozycję GPS...
+        </p>
       )}
-      <ScreenLock active={screenLocked} onUnlock={() => setScreenLocked(false)} />
+      <ScreenLock
+        active={screenLocked}
+        onUnlock={() => setScreenLocked(false)}
+      />
       {userPosition ? (
         <>
           <h2 className="text-black font-semibold text-xl">{trackName}</h2>
@@ -460,10 +466,18 @@ useWakeLock(isTracking);
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>
       )}
-       {/* Przycisk do blokowania ekranu */}
-      <ScreenLockButton onLock={() => setScreenLocked(true)} />
-          {/* Komponent blokady ekranu */}
-      <ScreenLock active={screenLocked} onUnlock={() => setScreenLocked(false)} />
+      {/* Przycisk do blokowania ekranu */}
+      <ScreenLockButton
+        onLock={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" }); // Dodaj to
+          setScreenLocked(true);
+        }}
+      />
+      {/* Komponent blokady ekranu */}
+      <ScreenLock
+        active={screenLocked}
+        onUnlock={() => setScreenLocked(false)}
+      />
     </div>
   );
 };
