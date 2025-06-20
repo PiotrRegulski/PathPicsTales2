@@ -11,7 +11,7 @@ const ScreenLock: React.FC<ScreenLockProps> = ({ active, onUnlock }) => {
   return (
     <div
       className="
-        fixed inset-0 w-screen h-screen
+        fixed inset-0 w-screen  h-[100dvh]
         z-[9999]
         bg-black/80
         flex items-center justify-center
