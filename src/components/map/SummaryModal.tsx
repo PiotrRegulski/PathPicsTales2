@@ -32,7 +32,7 @@ export function SummaryModal({
   const missingDescriptions = photos.length - photosWithDescription.length;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[1000]">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 className="text-xl font-bold mb-4">Podsumowanie trasy</h2>
         <p>
