@@ -39,7 +39,7 @@ export function SummaryModal({
           Twoja trasa <b>{trackName}</b> zajęła Ci <b>{formatTime(travelTime)}</b>.
         </p>
         <p>
-          Zrobiłeś podczas niej <b>{photos.length}</b> zdjęć.
+          Ilość zrobionych zdjęć to <b>{photos.length}</b>
         </p>
         <p>
           {photosWithDescription.length > 0
@@ -47,7 +47,7 @@ export function SummaryModal({
             : "Nie dodałeś jeszcze opisów do zdjęć."}
         </p>
         <p className="mt-2 text-sm text-gray-700">
-          Opisy są ważne, by stworzyć opowieść z podróży i mieć piękną pamiątkę. 
+          Dzięki opisom Twoja galeria to nie tylko zdjęcia, ale gotowa opowieść z wyjazdu!
         </p>
         {missingDescriptions > 0 && (
           <div className="mt-4 text-red-600">
