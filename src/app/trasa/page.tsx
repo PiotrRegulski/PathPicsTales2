@@ -18,7 +18,7 @@ export default function MapPage() {
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-2xl font-bold py-1">PathPicsTales</h1>
+      <h1 className="text-2xl font-bold py-1 text-center">PathPicsTales</h1>
       <MapComponent resume={resume} />
     </div>
   );

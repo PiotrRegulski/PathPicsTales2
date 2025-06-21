@@ -427,7 +427,7 @@ const handleEditPhotoDescription = (photoId: string, newDescription: string) => 
       />
       {userPosition ? (
         <>
-          <h2 className="text-black font-semibold text-xl">{trackName}</h2>
+          <h2 className="text-black font-semibold text-xl">Tarsa: {trackName}</h2>
           <MapView
             userPosition={userPosition}
             track={track}

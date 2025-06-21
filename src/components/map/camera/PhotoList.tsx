@@ -17,7 +17,7 @@ export default function PhotoList({ photos, onEditDescription }: PhotoListProps)
 
   return (
     <div className="photo-list mt-4 grid grid-cols-1 gap-2 my-4">
-      {photos.map(({ id, imageDataUrl, description, timestamp, position }) => (
+      {photos.map(({ id, imageDataUrl, description, timestamp }) => (
         <div key={id} className="border rounded shadow p-2">
           <Image
             src={imageDataUrl}
@@ -72,11 +72,11 @@ export default function PhotoList({ photos, onEditDescription }: PhotoListProps)
           <small className="text-gray-500 block">
             {new Date(timestamp).toLocaleString()}
           </small>
-          {position && (
+          {/* {position && (
             <small className="text-gray-400 block">
               Pozycja: {position.lat.toFixed(5)}, {position.lon.toFixed(5)}
             </small>
-          )}
+          )} */}
         </div>
       ))}
     </div>

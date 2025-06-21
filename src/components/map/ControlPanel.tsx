@@ -22,7 +22,7 @@ export default function ControlPanel({
   trackName
 }: ControlPanelProps) {
   return (
-    <div className="flex justify-center gap-4 my-4 flex-wrap">
+    <div className="flex justify-center gap-3 my-4 flex-wrap">
       <button
         onClick={onStartPause}
         disabled={!trackName.trim()}
