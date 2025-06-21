@@ -49,7 +49,7 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
         onClick={() => fileInputRef.current?.click()}
         disabled={!isTracking}
         className={`
-          fixed bottom-6 right-6 z-50
+          sticky bottom-9 right-6 z-50
           bg-orange-400 text-white
           w-16 h-16 rounded-full flex items-center justify-center
           shadow-lg transition-transform duration-150
