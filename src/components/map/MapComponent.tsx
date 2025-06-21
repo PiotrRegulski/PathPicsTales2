@@ -409,19 +409,20 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       <SummaryModal
         isOpen={showSummaryModal}
         onClose={() => setShowSummaryModal(false)}
+        onResetPhotos={() => setPhotos([])}
         onSave={() => {
           // tutaj wywołaj swój kod zapisujący trasę
           // np. handleSaveTrack()
           setShowSummaryModal(false);
-        }}
+        } }
         trackName={trackName}
         travelTime={travelTime}
         photos={photos}
         onEditDescriptions={() => {
           setShowSummaryModal(false);
           // przewiń do PhotoList lub ustaw focus na edycję opisów
-        }}
-      />
+        } } track={[]} elapsedTime={0} distance={0}      /> 
+
 
       <TrackNameModal
         isOpen={showTrackNameModal}
@@ -487,7 +488,12 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           />
           <button
             className="bg-green-600 text-white px-4 py-2 rounded mt-4"
-            onClick={() => setShowSummaryModal(true)}
+            onClick={async () => {
+              if (isTracking) {
+                await handleStartPause(); // zatrzymaj tracking, jeśli trwa
+              }
+              setShowSummaryModal(true);
+            }}
           >
             Podsumowanie trasy
           </button>

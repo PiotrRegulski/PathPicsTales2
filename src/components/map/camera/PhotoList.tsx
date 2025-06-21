@@ -8,7 +8,10 @@ type PhotoListProps = {
   onEditDescription: (photoId: string, newDescription: string) => void;
 };
 
-export default function PhotoList({ photos, onEditDescription }: PhotoListProps) {
+export default function PhotoList({
+  photos,
+  onEditDescription,
+}: PhotoListProps) {
   // Przechowuj ID zdjęcia, które jest aktualnie edytowane
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempDesc, setTempDesc] = useState<string>("");
@@ -56,8 +59,16 @@ export default function PhotoList({ photos, onEditDescription }: PhotoListProps)
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-sm flex-1">{description && description.trim() !== "" ? description : "Brak opisu"}</p>
+            <div className="flex flex-col items-center justify-center gap-2 mt-2 w-full ">
+              <div>
+                {" "}
+                <p className="text-sm flex-1">
+                  {description && description.trim() !== ""
+                    ? description
+                    : "Brak opisu"}
+                </p>
+              </div>
+
               <button
                 className="text-blue-600 underline text-xs"
                 onClick={() => {
@@ -65,7 +76,7 @@ export default function PhotoList({ photos, onEditDescription }: PhotoListProps)
                   setTempDesc(description || "");
                 }}
               >
-                Edytuj
+                Edytuj Opis
               </button>
             </div>
           )}

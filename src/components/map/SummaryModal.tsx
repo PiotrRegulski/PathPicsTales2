@@ -1,5 +1,6 @@
 import React from "react";
 import type { Photo } from "@/components/map/types";
+import SaveTrackButton from "./camera/SaveTrackButton";
 type SummaryModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -8,6 +9,10 @@ type SummaryModalProps = {
   travelTime: number;
   photos: Photo[];
   onEditDescriptions: () => void;
+  track : { lat: number; lon: number }[];
+  elapsedTime: number;
+    distance: number;
+     onResetPhotos: () => void;
 };
 
 const formatTime = (seconds: number) => {
@@ -20,11 +25,14 @@ const formatTime = (seconds: number) => {
 export function SummaryModal({
   isOpen,
   onClose,
-  onSave,
+ track,
+ distance,
+  elapsedTime,
   trackName,
   travelTime,
   photos,
   onEditDescriptions,
+    onResetPhotos,
 }: SummaryModalProps) {
   if (!isOpen) return null;
 
@@ -64,12 +72,15 @@ export function SummaryModal({
           </div>
         )}
         <div className="flex justify-end gap-2 mt-6">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={onSave}
-          >
-            Zapisz trasę
-          </button>
+           <SaveTrackButton
+                     trackName={trackName}
+                     track={track}
+                     distance={distance}
+                     travelTime={travelTime}
+                     elapsedTime={elapsedTime}
+                     photos={photos}
+                     onReset={onResetPhotos}
+                   />
           <button
             className="bg-gray-300 px-4 py-2 rounded"
             onClick={onClose}
