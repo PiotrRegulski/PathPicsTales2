@@ -390,7 +390,14 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setPausedElapsed(0);
     setGpsError(null);
   };
-
+  // Funkcja do edycji opisu zdjęcia
+const handleEditPhotoDescription = (photoId: string, newDescription: string) => {
+  setPhotos((prev) =>
+    prev.map((photo) =>
+      photo.id === photoId ? { ...photo, description: newDescription } : photo
+    )
+  );
+};
   return (
     <div className="flex flex-col items-center p-4">
       <TrackNameModal
@@ -449,7 +456,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             userPosition={userPosition}
             onAddPhoto={handleAddPhoto}
           />
-          <PhotoList photos={photos} />
+          <PhotoList photos={photos} onEditDescription={handleEditPhotoDescription}/>
           <SaveTrackButton
             trackName={trackName}
             track={track}
