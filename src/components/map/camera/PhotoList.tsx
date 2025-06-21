@@ -57,7 +57,7 @@ export default function PhotoList({ photos, onEditDescription }: PhotoListProps)
             </div>
           ) : (
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-sm flex-1">{description || "Brak opisu"}</p>
+              <p className="text-sm flex-1">{description && description.trim() !== "" ? description : "Brak opisu"}</p>
               <button
                 className="text-blue-600 underline text-xs"
                 onClick={() => {
