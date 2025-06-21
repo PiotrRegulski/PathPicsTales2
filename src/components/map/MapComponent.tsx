@@ -406,22 +406,23 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   };
   return (
     <div className="flex flex-col items-center p-4">
-      <SummaryModal
-        isOpen={showSummaryModal}
-        onClose={() => setShowSummaryModal(false)}
-        onResetPhotos={() => setPhotos([])}
-        onSave={() => {
-          // tutaj wywołaj swój kod zapisujący trasę
-          // np. handleSaveTrack()
-          setShowSummaryModal(false);
-        } }
-        trackName={trackName}
-        travelTime={travelTime}
-        photos={photos}
-        onEditDescriptions={() => {
-          setShowSummaryModal(false);
-          // przewiń do PhotoList lub ustaw focus na edycję opisów
-        } } track={[]} elapsedTime={0} distance={0}      /> 
+   <SummaryModal
+  isOpen={showSummaryModal}
+  onClose={() => setShowSummaryModal(false)}
+  onResetPhotos={() => setPhotos([])}
+  onSave={() => {
+    setShowSummaryModal(false);
+  }}
+  trackName={trackName}
+  travelTime={travelTime}
+  photos={photos}
+  onEditDescriptions={() => {
+    setShowSummaryModal(false);
+  }}
+  track={track}
+  elapsedTime={elapsedTime}
+  distance={distance}
+/>
 
 
       <TrackNameModal

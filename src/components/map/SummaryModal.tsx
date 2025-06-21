@@ -9,10 +9,10 @@ type SummaryModalProps = {
   travelTime: number;
   photos: Photo[];
   onEditDescriptions: () => void;
-  track : { lat: number; lon: number }[];
+  track: { lat: number; lon: number }[];
   elapsedTime: number;
-    distance: number;
-     onResetPhotos: () => void;
+  distance: number;
+  onResetPhotos: () => void;
 };
 
 const formatTime = (seconds: number) => {
@@ -25,18 +25,20 @@ const formatTime = (seconds: number) => {
 export function SummaryModal({
   isOpen,
   onClose,
- track,
- distance,
+  track,
+  distance,
   elapsedTime,
   trackName,
   travelTime,
   photos,
   onEditDescriptions,
-    onResetPhotos,
+  onResetPhotos,
 }: SummaryModalProps) {
   if (!isOpen) return null;
 
-  const photosWithDescription = photos.filter((p) => p.description && p.description.trim() !== "");
+  const photosWithDescription = photos.filter(
+    (p) => p.description && p.description.trim() !== ""
+  );
   const missingDescriptions = photos.length - photosWithDescription.length;
 
   return (
@@ -44,7 +46,8 @@ export function SummaryModal({
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <h2 className="text-xl font-bold mb-4">Podsumowanie trasy</h2>
         <p>
-          Twoja trasa <b>{trackName}</b> zajęła Ci <b>{formatTime(travelTime)}</b>.
+          Twoja trasa <b>{trackName}</b> zajęła Ci{" "}
+          <b>{formatTime(travelTime)}</b>.
         </p>
         <p>
           Ilość zrobionych zdjęć to <b>{photos.length}</b>
@@ -55,7 +58,8 @@ export function SummaryModal({
             : "Nie dodałeś jeszcze opisów do zdjęć."}
         </p>
         <p className="mt-2 text-sm text-gray-700">
-          Dzięki opisom Twoja galeria to nie tylko zdjęcia, ale gotowa opowieść z wyjazdu!
+          Dzięki opisom Twoja galeria to nie tylko zdjęcia, ale gotowa opowieść
+          z wyjazdu!
         </p>
         {missingDescriptions > 0 && (
           <div className="mt-4 text-red-600">
@@ -72,19 +76,16 @@ export function SummaryModal({
           </div>
         )}
         <div className="flex justify-end gap-2 mt-6">
-           <SaveTrackButton
-                     trackName={trackName}
-                     track={track}
-                     distance={distance}
-                     travelTime={travelTime}
-                     elapsedTime={elapsedTime}
-                     photos={photos}
-                     onReset={onResetPhotos}
-                   />
-          <button
-            className="bg-gray-300 px-4 py-2 rounded"
-            onClick={onClose}
-          >
+          <SaveTrackButton
+            trackName={trackName}
+            track={track}
+            distance={distance}
+            travelTime={travelTime}
+            elapsedTime={elapsedTime}
+            photos={photos}
+            onReset={onResetPhotos}
+          />
+          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>
             Zamknij
           </button>
         </div>
