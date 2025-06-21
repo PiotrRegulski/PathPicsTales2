@@ -16,6 +16,7 @@ import KalmanFilter from "kalmanjs";
 import TrackNameModal from "./TrackNameModal";
 import type { Photo } from "@/components/map/types";
 import ScreenLockButton from "./ScreenLockButton";
+import { SummaryModal } from "./SummaryModal";
 
 type UserPosition = {
   lat: number;
@@ -44,6 +45,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [showTrackNameModal, setShowTrackNameModal] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
   const [screenLocked, setScreenLocked] = useState(false);
+  // Stan modalnego okna podsumowania trasy
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   // Stany dla elapsedTime liczonego tylko podczas ruchu
   const [elapsedTime, setElapsedTime] = useState<number>(0);
@@ -391,15 +394,35 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setGpsError(null);
   };
   // Funkcja do edycji opisu zdjęcia
-const handleEditPhotoDescription = (photoId: string, newDescription: string) => {
-  setPhotos((prev) =>
-    prev.map((photo) =>
-      photo.id === photoId ? { ...photo, description: newDescription } : photo
-    )
-  );
-};
+  const handleEditPhotoDescription = (
+    photoId: string,
+    newDescription: string
+  ) => {
+    setPhotos((prev) =>
+      prev.map((photo) =>
+        photo.id === photoId ? { ...photo, description: newDescription } : photo
+      )
+    );
+  };
   return (
     <div className="flex flex-col items-center p-4">
+      <SummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        onSave={() => {
+          // tutaj wywołaj swój kod zapisujący trasę
+          // np. handleSaveTrack()
+          setShowSummaryModal(false);
+        }}
+        trackName={trackName}
+        travelTime={travelTime}
+        photos={photos}
+        onEditDescriptions={() => {
+          setShowSummaryModal(false);
+          // przewiń do PhotoList lub ustaw focus na edycję opisów
+        }}
+      />
+
       <TrackNameModal
         isOpen={showTrackNameModal}
         trackName={trackName}
@@ -427,7 +450,9 @@ const handleEditPhotoDescription = (photoId: string, newDescription: string) => 
       />
       {userPosition ? (
         <>
-          <h2 className="text-black font-semibold text-xl">Tarsa: {trackName}</h2>
+          <h2 className="text-black font-semibold text-xl">
+            Tarsa: {trackName}
+          </h2>
           <MapView
             userPosition={userPosition}
             track={track}
@@ -456,7 +481,16 @@ const handleEditPhotoDescription = (photoId: string, newDescription: string) => 
             userPosition={userPosition}
             onAddPhoto={handleAddPhoto}
           />
-          <PhotoList photos={photos} onEditDescription={handleEditPhotoDescription}/>
+          <PhotoList
+            photos={photos}
+            onEditDescription={handleEditPhotoDescription}
+          />
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded mt-4"
+            onClick={() => setShowSummaryModal(true)}
+          >
+            Podsumowanie trasy
+          </button>
           <SaveTrackButton
             trackName={trackName}
             track={track}
@@ -477,7 +511,7 @@ const handleEditPhotoDescription = (photoId: string, newDescription: string) => 
       <ScreenLockButton
         onLock={() => {
           window.scrollTo({ top: 0, behavior: "auto" }); // Dodaj to
-          setTimeout(()=>setScreenLocked(true), 400); // Opóźnienie dla lepszego UX
+          setTimeout(() => setScreenLocked(true), 400); // Opóźnienie dla lepszego UX
         }}
       />
       {/* Komponent blokady ekranu */}
