@@ -5,10 +5,10 @@ const ScreenLockButton: React.FC<{ onLock: () => void }> = ({ onLock }) => (
   <button
     type="button"
     className="
-      sticky top-6 right-6 z-[10000]
+      fixed top-9 right-6 z-[10000]
       flex items-center gap-2
-      px-4 py-2 rounded-full
-      bg-blue-600 text-white shadow-lg
+      px-4 py-4 rounded-full
+      bg-blue-600 text-white shadow-lg shadow-amber-100
       hover:bg-blue-700 transition
     "
     onClick={onLock}
