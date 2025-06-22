@@ -8,19 +8,12 @@ import {
 import L from "leaflet";
 import Image from "next/image";
 import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Dostosuj ścieżkę importu do swojego projektu
-
+import { Photo } from "./types";
 type UserPosition = {
   lat: number;
   lon: number;
 };
 
-type Photo = {
-  id: string;
-  imageDataUrl: string;
-  description: string;
-  position: UserPosition;
-  timestamp: number;
-};
 
 type MapViewProps = {
   track: UserPosition[];
@@ -35,6 +28,7 @@ const MapView: React.FC<MapViewProps> = ({
   selectedPhotoId,
   onPhotoMarkerClick,
 }) => {
+
   if (
     !track ||
     track.length === 0 ||

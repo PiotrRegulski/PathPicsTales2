@@ -13,10 +13,13 @@ export type Photo = {
 };
 
 export type Track = {
-  id: string;
+ id: string;
+  trackName: string;
+  travelTime: number;
+  distance: number;
+  elapsedTime: number;
   track: UserPosition[];
   photos: Photo[];
-  // inne pola (opcjonalnie)
 };
 
 export type MapViewProps = {

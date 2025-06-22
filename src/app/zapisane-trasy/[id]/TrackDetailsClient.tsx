@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { openDB } from "idb";
 import dynamic from "next/dynamic";
-import PhotoList from "@/components/Tracks/PhotoList";
 import type { Track } from "@/components/Tracks/types";
 import type { Photo } from "@/components/map/types";
+import TravelBlogArticle from "@/components/Tracks/TravelBlogArticle";
+// import TravelBlogArticle from "@/components/Tracks/TravelBlogArticle";
 
 // Dynamiczny import mapy (SSR off)
 const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
@@ -15,6 +16,7 @@ const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
 
 type Props = {
   id: string;
+ 
 };
 
 export default function TrackDetailsClient({ id }: Props) {
@@ -42,7 +44,8 @@ export default function TrackDetailsClient({ id }: Props) {
   }
 
   return (
-    <div className="flex flex-col w-full justify-center items-center mx-auto h-screen">
+    <div className="flex flex-col w-full justify-center items-center mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Opowieść z trasy: {track.trackName}</h1>
       <div className="w-full max-w-2xl mx-auto border rounded-lg shadow mb-4 overflow-hidden">
         <MapView
           track={track.track}
@@ -51,10 +54,14 @@ export default function TrackDetailsClient({ id }: Props) {
           onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
         />
       </div>
-      <PhotoList
+ 
+         <TravelBlogArticle
+        trackName={track.trackName}
+        travelTime={track.travelTime}
+        distance={track.distance}
         photos={track.photos}
-        onPhotoClick={(photo) => setSelectedPhoto(photo)}
-      />
+      /> 
+  
     </div>
   );
 }
