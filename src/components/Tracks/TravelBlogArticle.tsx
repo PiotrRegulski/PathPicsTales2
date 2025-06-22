@@ -39,7 +39,7 @@ export default function TravelBlogArticle({
       <article className="mx-auto my-8 px-4 max-w-2xl">
         <h1 className="text-3xl font-bold mb-4 text-black">{trackName}</h1>
         <p className="mb-6 text-lg">
-          Wyruszyłeś w trasę o długości <b>{distance.toFixed(1)} km</b>, która zajęła Ci <b>{formatTime(travelTime)}</b>.
+          Wyruszyłeś w trasę o długości <b>{(distance / 1000).toFixed(2)} km</b>, która zajęła Ci <b>{formatTime(travelTime)}</b>.
           Oto najciekawsze momenty uchwycone na zdjęciach:
         </p>
         {photos.map((photo, idx) => (
