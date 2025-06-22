@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import type { Track } from "@/components/Tracks/types";
 import type { Photo } from "@/components/map/types";
 import TravelBlogArticle from "@/components/Tracks/TravelBlogArticle";
+import ShareTrackButton from "@/components/Tracks/ShareTrackButton";
 // import TravelBlogArticle from "@/components/Tracks/TravelBlogArticle";
 
 // Dynamiczny import mapy (SSR off)
@@ -61,7 +62,14 @@ export default function TrackDetailsClient({ id }: Props) {
         distance={track.distance}
         photos={track.photos}
       /> 
-  
+  <ShareTrackButton
+  track={{
+    ...track,
+    photos: track.photos ?? []
+  }}
+  onSuccess={() => alert("Trasa została udostępniona!")}
+  // Możesz tu dodać przekierowanie do /trasy-uzytkownikow, jeśli chcesz
+/>
     </div>
   );
 }
