@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import type { Photo } from "@/components/map/types";
+import WikiFactFetcher from "@/components/WikiFactFetcher";
 
 type PhotoListProps = {
   photos: Photo[];
@@ -39,6 +40,12 @@ export default function PhotoList({
                 onChange={(e) => setTempDesc(e.target.value)}
                 className="border p-1 rounded"
                 autoFocus
+              />
+              <WikiFactFetcher
+                initialKeyword={tempDesc}
+                onSave={(fact) =>
+                  setTempDesc((prev) => (prev ? prev + "\n" + fact : fact))
+                }
               />
               <div className="flex gap-2">
                 <button
