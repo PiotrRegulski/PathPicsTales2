@@ -6,7 +6,7 @@ export type UserPosition = {
 
 export type Photo = {
   id: string;
-  imageDataUrl: string;
+  blob: Blob;
   description: string;
   position: UserPosition;
   timestamp: number;

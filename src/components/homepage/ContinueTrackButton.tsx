@@ -24,10 +24,10 @@ export default function ContinueTrackButton() {
   if (hasOngoing === null) return null; // czekamy na wynik
 
   return (
-    <Link href={hasOngoing ? "/trasa?resume=true" : "#"} legacyBehavior>
+    <Link href={hasOngoing ? "/trasa?resume=true" : "#"} >
       <button
         disabled={!hasOngoing}
-        className={`px-6 py-3 text-xl rounded-lg transition duration-300 ${
+        className={`px-6 py-3 text-xl rounded-lg transition duration-300  w-48 ${
           hasOngoing
             ? "bg-blue-600 text-white hover:bg-blue-700"
             : "bg-gray-400 text-gray-700 cursor-not-allowed"

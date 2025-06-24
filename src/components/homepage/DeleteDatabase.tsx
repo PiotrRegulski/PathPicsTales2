@@ -28,7 +28,7 @@ export default function DeleteDatabaseButton() {
     <div className="flex flex-col items-center justify-center w-full  text-gray-800">
       <button
         onClick={deleteDatabase}
-        className="my-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-shadow duration-300 "
+        className="my-2 bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 transition-shadow duration-300 w-48  "
       >
         Usuń bazę danych
       </button>

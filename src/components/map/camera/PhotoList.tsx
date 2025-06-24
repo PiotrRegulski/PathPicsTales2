@@ -1,9 +1,8 @@
 "use client";
 import React, { useState } from "react";
-import Image from "next/image";
 import type { Photo } from "@/components/map/types";
 import WikiFactFetcher from "@/components/WikiFactFetcher";
-
+import PhotoBlobImage from "@/components/map/camera/PhotoBlobToImage";
 type PhotoListProps = {
   photos: Photo[];
   onEditDescription: (photoId: string, newDescription: string) => void;
@@ -21,15 +20,14 @@ export default function PhotoList({
 
   return (
     <div className="photo-list mt-4 grid grid-cols-1 gap-2 my-4">
-      {photos.map(({ id, imageDataUrl, description, timestamp }) => (
+      {photos.map(({ id, blob, description, timestamp }) => (
         <div key={id} className="border rounded shadow p-2">
-          <Image
-            src={imageDataUrl}
+          <PhotoBlobImage
+            blob={blob}
             alt="Zdjęcie z trasy"
             width={400}
             height={400}
             className="rounded"
-            unoptimized={true}
           />
           {/* Tryb edycji */}
           {editingId === id ? (

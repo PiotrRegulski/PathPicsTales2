@@ -3,31 +3,42 @@ import React, { useRef, useState } from "react";
 import type { UserPosition } from "@/components/map/types";
 import CameraIcon from "@/components/Icons/CameraIcon";
 
+type Photo = {
+  id: string;
+  blob: Blob;
+  description: string;
+  position: UserPosition;
+  timestamp: number;
+};
+
 type PhotoInputProps = {
   isTracking: boolean;
   userPosition: UserPosition | null;
-  onAddPhoto: (imageDataUrl: string, description: string, position: UserPosition | null) => void;
+  onAddPhoto: (photo: Photo) => void;
 };
 
 export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: PhotoInputProps) {
   const [description, setDescription] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userPosition) return;
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file || !userPosition) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const imageDataUrl = reader.result as string;
-      onAddPhoto(imageDataUrl, description.trim(),userPosition);
-      setDescription("");
-    };
-    reader.readAsDataURL(file);
+  const photo: Photo = {
+    id: crypto.randomUUID(),
+    blob: file,
+    description: description.trim(),
+    position: userPosition,
+    timestamp: Date.now(),
   };
+  onAddPhoto(photo);
+  setDescription("");
+  if (fileInputRef.current) fileInputRef.current.value = "";
+};
 
   return (
-    <div className="photo-input flex gap-2 items-center my-2  ">
+    <div className="photo-input flex gap-2 items-center my-2">
       <input
         type="file"
         accept="image/*"
@@ -37,6 +48,7 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
         onChange={handleFileChange}
         disabled={!isTracking}
       />
+      {/* Jeśli chcesz pole opisu, odkomentuj poniżej */}
       {/* <input
         type="text"
         placeholder="Opis zdjęcia"
@@ -45,7 +57,7 @@ export default function PhotoInput({ isTracking, userPosition, onAddPhoto }: Pho
         disabled={!isTracking}
         className="border rounded px-2 py-1 flex-grow"
       /> */}
-           <button
+      <button
         onClick={() => fileInputRef.current?.click()}
         disabled={!isTracking}
         className={`

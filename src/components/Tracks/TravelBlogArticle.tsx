@@ -1,6 +1,5 @@
-import Image from "next/image";
 import type { Photo } from "@/components/map/types";
-
+import PhotoBlobImage from "@/components/map/camera/PhotoBlobToImage"; // Adjust the import path as needed
 type TravelBlogArticleProps = {
   trackName: string;
   travelTime: number;
@@ -45,13 +44,13 @@ export default function TravelBlogArticle({
         {photos.map((photo, idx) => (
           <section key={photo.id} className="my-10">
             <div className="relative w-full max-w-2xl mx-auto aspect-video rounded-lg overflow-hidden shadow-md">
-              <Image
-                src={photo.imageDataUrl}
-                alt={photo.description || "Zdjęcie z trasy"}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 700px"
-              />
+            <PhotoBlobImage
+                       blob={photo.blob}
+                       alt="Zdjęcie z trasy"
+                       width={600}
+                       height={600}
+                       className="rounded object-cover w-full h-full"
+                     />
             </div>
             <p className="mt-4 text-lg leading-relaxed">
               <span className="font-semibold">Moment #{idx + 1}:</span>{" "}

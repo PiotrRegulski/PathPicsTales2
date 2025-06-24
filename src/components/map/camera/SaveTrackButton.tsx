@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 type Photo = {
   id: string;
-  imageDataUrl: string;
+  blob: Blob;
   description: string;
   position: UserPosition;
   timestamp: number;
@@ -46,8 +46,8 @@ export default function SaveTrackButton({
   photos,
   onReset,
 }: SaveTrackButtonProps) {
-
   const router = useRouter();
+
   const saveTrackToDB = async () => {
     if (!trackName.trim()) {
       alert("Podaj nazwę trasy przed zapisem.");
@@ -60,6 +60,7 @@ export default function SaveTrackButton({
 
     const db = await getDB();
 
+    // Zapisujemy zdjęcia jako Blob w IndexedDB (to jest wspierane!)
     const trackData = {
       id: crypto.randomUUID(),
       trackName,
@@ -68,13 +69,13 @@ export default function SaveTrackButton({
       distance,
       travelTime,
       elapsedTime,
-      photos,
+      photos, // tablica Photo z blobami!
     };
 
     await db.put("tracks", trackData);
     alert("Trasa i zdjęcia zostały zapisane.");
     onReset();
-     router.push("/zapisane-trasy"); // przekierowanie po zapisie
+    router.push("/zapisane-trasy");
   };
 
   return (

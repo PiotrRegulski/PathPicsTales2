@@ -6,7 +6,8 @@ import {
   Popup,
 } from "react-leaflet";
 import L from "leaflet";
-import Image from "next/image";
+import "leaflet/dist/leaflet.css";
+import PhotoBlobImage from  "@/components/map/camera/PhotoBlobToImage"; // Dostosuj ścieżkę importu do swojego projektu
 import MapBoundsAdjuster from "./MapBoundsAdjuster"; // Dostosuj ścieżkę importu do swojego projektu
 import { Photo } from "./types";
 type UserPosition = {
@@ -75,12 +76,13 @@ const MapView: React.FC<MapViewProps> = ({
             {selectedPhotoId === photo.id && (
               <Popup>
                 <div>
-                  <Image
-                    src={photo.imageDataUrl}
-                    alt={photo.description}
-                    width={100}
-                    height={100}
-                  />
+                  <PhotoBlobImage
+                              blob={photo.blob}
+                              alt="Zdjęcie z trasy"
+                              width={200}
+                              height={200}
+                              className="rounded"
+                            />
                   <p>{photo.description}</p>
                   <small>
                     Pozycja: {photo.position.lat.toFixed(5)}, {photo.position.lon.toFixed(5)}

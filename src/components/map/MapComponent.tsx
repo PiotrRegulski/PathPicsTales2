@@ -66,7 +66,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   // Funkcja pobierająca pozycję GPS o wysokiej dokładności
   const getAccuratePosition = (
-    maxAttempts = 5
+    maxAttempts = 10
   ): Promise<GeolocationPosition> => {
     let attempts = 0;
     return new Promise((resolve, reject) => {
@@ -317,17 +317,9 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [elapsedStart, pausedElapsed]);
 
   // Dodaj obsługę dodawania zdjęć:
-  const handleAddPhoto = (imageDataUrl: string, description: string) => {
-    if (!userPosition) return;
-    const newPhoto: Photo = {
-      id: crypto.randomUUID(),
-      imageDataUrl,
-      description,
-      position: userPosition,
-      timestamp: Date.now(),
-    };
-    setPhotos((prev) => [...prev, newPhoto]);
-  };
+const handleAddPhoto = (photo: Photo) => {
+  setPhotos((prev) => [...prev, photo]);
+};
   useWakeLock(isTracking);
   // Obsługa start/pauza śledzenia z oczekiwaniem na dokładną pozycję przy wznowieniu
   const handleStartPause = async () => {

@@ -1,5 +1,5 @@
-'use client';
-
+"use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { openDB } from "idb";
 import dynamic from "next/dynamic";
@@ -17,7 +17,6 @@ const MapView = dynamic(() => import("@/components/Tracks/MapView"), {
 
 type Props = {
   id: string;
- 
 };
 
 export default function TrackDetailsClient({ id }: Props) {
@@ -36,17 +35,15 @@ export default function TrackDetailsClient({ id }: Props) {
   }, [id]);
 
   // Sprawdzamy, czy track i jego pola są poprawne
-  if (
-    !track ||
-    !Array.isArray(track.photos) ||
-    !Array.isArray(track.track)
-  ) {
+  if (!track || !Array.isArray(track.photos) || !Array.isArray(track.track)) {
     return <p>Ładowanie...</p>;
   }
 
   return (
     <div className="flex flex-col w-full justify-center items-center mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Opowieść z trasy: {track.trackName}</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Opowieść z trasy: {track.trackName}
+      </h1>
       <div className="w-full max-w-2xl mx-auto border rounded-lg shadow mb-4 overflow-hidden">
         <MapView
           track={track.track}
@@ -55,21 +52,22 @@ export default function TrackDetailsClient({ id }: Props) {
           onPhotoMarkerClick={(photo) => setSelectedPhoto(photo)}
         />
       </div>
- 
-         <TravelBlogArticle
+
+      <TravelBlogArticle
         trackName={track.trackName}
         travelTime={track.travelTime}
         distance={track.distance}
         photos={track.photos}
-      /> 
-  <ShareTrackButton
-  track={{
-    ...track,
-    photos: track.photos ?? []
-  }}
-  onSuccess={() => alert("Trasa została udostępniona!")}
-  // Możesz tu dodać przekierowanie do /trasy-uzytkownikow, jeśli chcesz
-/>
+      />
+      <ShareTrackButton
+        track={{
+          ...track,
+          photos: track.photos ?? [],
+        }}
+        onSuccess={() => alert("Trasa została udostępniona!")}
+        // Możesz tu dodać przekierowanie do /trasy-uzytkownikow, jeśli chcesz
+      />
+      <Link href={"/zapisane-trasy"} className="text-xl text-blue-950 my-2 ">Powrót do listy tras</Link>
     </div>
   );
 }
