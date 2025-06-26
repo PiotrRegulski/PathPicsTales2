@@ -54,8 +54,9 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
 
   // Kalman filter for smoothing GPS data
-  const latFilter = useRef(new KalmanFilter());
-  const lonFilter = useRef(new KalmanFilter());
+  const KALMAN_PARAMS = { R: 0.01, Q: 3 };
+  const latFilter = useRef(new KalmanFilter(KALMAN_PARAMS));
+  const lonFilter = useRef(new KalmanFilter(KALMAN_PARAMS));
 
   const [trackName, setTrackName] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -152,12 +153,39 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setGpsError(null);
 
     try {
-      const position = await getAccuratePosition();
+      if (!("geolocation" in navigator)) {
+        throw new Error("Geolokalizacja nie jest dostępna");
+      }
+
+      // Pobierz pierwszą dostępną pozycję GPS (bez oczekiwania na dokładność)
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          });
+        }
+      );
+
+      // Filtrowanie pozycji
       const filteredLat = latFilter.current.filter(position.coords.latitude);
       const filteredLon = lonFilter.current.filter(position.coords.longitude);
       const newPosition = { lat: filteredLat, lon: filteredLon };
       setUserPosition(newPosition);
 
+      // Informacja o dokładności, ale nie blokujemy startu
+      if (position.coords.accuracy > MAX_ACCURACY) {
+        setGpsError(
+          `Uwaga: start z niską dokładnością GPS (${Math.round(
+            position.coords.accuracy
+          )} m)`
+        );
+      } else {
+        setGpsError(null);
+      }
+
+      // Rozpocznij śledzenie
       setIsTracking(true);
       setStartTime(Date.now());
       setTrack([newPosition]);
@@ -317,9 +345,9 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [elapsedStart, pausedElapsed]);
 
   // Dodaj obsługę dodawania zdjęć:
-const handleAddPhoto = (photo: Photo) => {
-  setPhotos((prev) => [...prev, photo]);
-};
+  const handleAddPhoto = (photo: Photo) => {
+    setPhotos((prev) => [...prev, photo]);
+  };
   useWakeLock(isTracking);
   // Obsługa start/pauza śledzenia z oczekiwaniem na dokładną pozycję przy wznowieniu
   const handleStartPause = async () => {
@@ -398,24 +426,23 @@ const handleAddPhoto = (photo: Photo) => {
   };
   return (
     <div className="flex flex-col items-center p-4">
-   <SummaryModal
-  isOpen={showSummaryModal}
-  onClose={() => setShowSummaryModal(false)}
-  onResetPhotos={() => setPhotos([])}
-  onSave={() => {
-    setShowSummaryModal(false);
-  }}
-  trackName={trackName}
-  travelTime={travelTime}
-  photos={photos}
-  onEditDescriptions={() => {
-    setShowSummaryModal(false);
-  }}
-  track={track}
-  elapsedTime={elapsedTime}
-  distance={distance}
-/>
-
+      <SummaryModal
+        isOpen={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        onResetPhotos={() => setPhotos([])}
+        onSave={() => {
+          setShowSummaryModal(false);
+        }}
+        trackName={trackName}
+        travelTime={travelTime}
+        photos={photos}
+        onEditDescriptions={() => {
+          setShowSummaryModal(false);
+        }}
+        track={track}
+        elapsedTime={elapsedTime}
+        distance={distance}
+      />
 
       <TrackNameModal
         isOpen={showTrackNameModal}
