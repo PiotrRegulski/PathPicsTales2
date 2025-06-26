@@ -230,88 +230,87 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [isTracking, startTime, pausedTime]);
 
   // Obsługa śledzenia pozycji podczas aktywnego tracking'u
-  useEffect(() => {
-    if (!isTracking) return;
-    let watchId: number;
-    if ("geolocation" in navigator) {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
+ useEffect(() => {
+  if (!isTracking) return;
+  let watchId: number | undefined;
+  if ("geolocation" in navigator) {
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        // Ustaw komunikat, jeśli dokładność jest słaba
+        if (position.coords.accuracy > MAX_ACCURACY) {
+          setGpsError(
+            `Uwaga: niska dokładność GPS (${Math.round(position.coords.accuracy)} m)`
+          );
+        } else {
           setGpsError(null);
-          if (position.coords.accuracy <= MAX_ACCURACY) {
-            const filteredLat = latFilter.current.filter(
-              position.coords.latitude
+        }
+
+        // Filtrowanie pozycji (możesz dodać accuracy do obiektu, jeśli chcesz)
+        const filteredLat = latFilter.current.filter(position.coords.latitude);
+        const filteredLon = lonFilter.current.filter(position.coords.longitude);
+        const newPosition = {
+          lat: filteredLat,
+          lon: filteredLon,
+          // accuracy: position.coords.accuracy, // opcjonalnie
+        };
+        const newSpeed =
+          position.coords.speed != null ? position.coords.speed * 3.6 : 0; // m/s -> km/h
+
+        if (newSpeed >= MIN_SPEED) {
+          setUserPosition((prevPosition) => {
+            if (!prevPosition) return newPosition;
+            const dist = getDistanceFromLatLonInMeters(
+              prevPosition.lat,
+              prevPosition.lon,
+              newPosition.lat,
+              newPosition.lon
             );
-            const filteredLon = lonFilter.current.filter(
-              position.coords.longitude
-            );
-            const newPosition = {
-              lat: filteredLat,
-              lon: filteredLon,
-            };
-            const newSpeed =
-              position.coords.speed != null ? position.coords.speed * 3.6 : 0; // m/s -> km/h
-
-            if (newSpeed >= MIN_SPEED) {
-              setUserPosition((prevPosition) => {
-                if (!prevPosition) return newPosition;
-                const dist = getDistanceFromLatLonInMeters(
-                  prevPosition.lat,
-                  prevPosition.lon,
-                  newPosition.lat,
-                  newPosition.lon
-                );
-                if (dist < MIN_DISTANCE) {
-                  return prevPosition;
-                }
-                return newPosition;
-              });
-
-              if (!startTime) {
-                setStartTime(Date.now());
-              }
-
-              setSpeed(newSpeed);
-
-              setTrack((prevTrack) => {
-                if (prevTrack.length === 0) {
-                  return [newPosition];
-                }
-                const lastPosition = prevTrack[prevTrack.length - 1];
-                const dist = getDistanceFromLatLonInMeters(
-                  lastPosition.lat,
-                  lastPosition.lon,
-                  newPosition.lat,
-                  newPosition.lon
-                );
-                if (dist >= MIN_DISTANCE) {
-                  setDistance((prevDistance) => prevDistance + dist);
-                  return [...prevTrack, newPosition];
-                }
-                return prevTrack;
-              });
-            } else {
-              setSpeed(0);
+            if (dist < MIN_DISTANCE) {
+              return prevPosition;
             }
-          } else {
-            setGpsError(
-              `Pomijam pozycję o niskiej dokładności: ${Math.round(
-                position.coords.accuracy
-              )} m`
-            );
+            return newPosition;
+          });
+
+          if (!startTime) {
+            setStartTime(Date.now());
           }
-        },
-        (error: GeolocationPositionError) => {
-          setGpsError(error.message);
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
+
+          setSpeed(newSpeed);
+
+          setTrack((prevTrack) => {
+            if (prevTrack.length === 0) {
+              return [newPosition];
+            }
+            const lastPosition = prevTrack[prevTrack.length - 1];
+            const dist = getDistanceFromLatLonInMeters(
+              lastPosition.lat,
+              lastPosition.lon,
+              newPosition.lat,
+              newPosition.lon
+            );
+            if (dist >= MIN_DISTANCE) {
+              setDistance((prevDistance) => prevDistance + dist);
+              return [...prevTrack, newPosition];
+            }
+            return prevTrack;
+          });
+        } else {
+          setSpeed(0);
+        }
+      },
+      (error) => {
+        setGpsError(error.message);
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  }
+  return () => {
+    if (watchId !== undefined  && "geolocation" in navigator) {
+      navigator.geolocation.clearWatch(watchId);
     }
-    return () => {
-      if (watchId && "geolocation" in navigator) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [isTracking, startTime]);
+  };
+}, [isTracking, startTime]);
+
 
   // Zarządzanie elapsedTime - liczy tylko podczas ruchu z prędkością >= MIN_SPEED
   useEffect(() => {
