@@ -47,7 +47,7 @@ export default function ShareTrackButton({ track, onSuccess }: ShareTrackButtonP
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         photos: photosWithUrls.map(({ blob, ...rest }) => rest),
       };
-
+console.log("Track to send:", trackToSend); // <-- DODAJ TO TUTAJ
       // 3. Wyślij trasę do API
       const res = await fetch("/api/public-tracks", {
         method: "POST",

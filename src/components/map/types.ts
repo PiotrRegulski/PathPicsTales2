@@ -5,6 +5,7 @@ export type UserPosition = {
 };
 
 export type Photo = {
+  url?: string; // URL z Vercel Blob
   id: string;
   blob: Blob;
   description: string;
