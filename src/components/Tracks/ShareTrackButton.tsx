@@ -6,7 +6,7 @@ import type { Track, Photo } from "@/components/Tracks/types";
 async function uploadPhotoToBlob(photo: Photo): Promise<string> {
   const formData = new FormData();
   formData.append("file", photo.blob, `${photo.id}.jpg`);
-  // Twój endpoint do uploadu zdjęcia
+  // endpoint do uploadu zdjęcia
   const res = await fetch("/api/upload-photo", {
     method: "POST",
     body: formData,
