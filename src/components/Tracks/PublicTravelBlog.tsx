@@ -7,6 +7,7 @@ type TravelBlogArticleProps = {
   travelTime: number;
   distance: number;
   photos: Photo[];
+   onDelete?: () => void; // nowy prop na funkcję usuwania
 };
 
 const formatTime = (seconds: number) => {
@@ -20,6 +21,7 @@ export default function TravelBlogArticle({
   travelTime,
   distance,
   photos,
+  onDelete, // odbieramy funkcję usuwania
 }: TravelBlogArticleProps) {
   // Filtruj tylko zdjęcia z URL (Vercel Blob)
   const photosWithUrl = photos.filter((p) => !!p.url);
@@ -80,6 +82,16 @@ export default function TravelBlogArticle({
         <p className="font-semibold mt-8">
           W sumie zrobiłeś {photosWithUrl.length} zdjęć. Dzięki nim możesz wracać do tej przygody kiedy tylko chcesz!
         </p>
+         {/* Przycisk usuwania */}
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            type="button"
+          >
+            Usuń trasę
+          </button>
+        )}
       </article>
     </div>
   );
