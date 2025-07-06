@@ -564,6 +564,7 @@ useEffect(() => {
             userPosition={userPosition}
             track={track}
             autoCenter={autoCenter}
+            photos={photos}
           />
           <ControlPanel
             isTracking={isTracking}
