@@ -2,11 +2,19 @@
 import React, { useState } from "react";
 import type { Track, Photo } from "@/components/Tracks/types";
 
-// Funkcja pomocnicza uploadująca jedno zdjęcie do Vercel Blob
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+// Placeholder - zaimplementuj własną kompresję (np. canvas)
+async function compressImage(blob: Blob): Promise<Blob> {
+  // Tu dodaj logikę kompresji zdjęcia
+  // Na razie zwracamy oryginalny blob bez zmian
+  return blob;
+}
+
+// Funkcja uploadująca jedno zdjęcie do Vercel Blob
 async function uploadPhotoToBlob(photo: Photo): Promise<string> {
   const formData = new FormData();
   formData.append("file", photo.blob, `${photo.id}.jpg`);
-  // endpoint do uploadu zdjęcia
   const res = await fetch("/api/upload-photo", {
     method: "POST",
     body: formData,
@@ -27,28 +35,48 @@ export default function ShareTrackButton({ track, onSuccess }: ShareTrackButtonP
   const handleShare = async () => {
     setLoading(true);
     try {
-      // 1. Najpierw upload zdjęć do Vercel Blob
+      const photosToUpload: Photo[] = [];
+
+      for (const photo of track.photos) {
+        if (photo.blob.size > MAX_FILE_SIZE) {
+          const confirmCompress = window.confirm(
+            `Zdjęcie o ID ${photo.id} jest za duże (${(photo.blob.size / 1024 / 1024).toFixed(2)} MB).\n` +
+            `Czy chcesz je skompresować przed wysłaniem? Kliknij OK, aby skompresować, lub Anuluj, aby przerwać upload.`
+          );
+          if (!confirmCompress) {
+            alert("Upload przerwany przez użytkownika.");
+            setLoading(false);
+            return; // przerwij cały upload
+          }
+          const compressedBlob = await compressImage(photo.blob);
+          photosToUpload.push({ ...photo, blob: compressedBlob });
+        } else {
+          photosToUpload.push(photo);
+        }
+      }
+
+      // Upload zdjęć (oryginalnych lub skompresowanych)
       const photosWithUrls = await Promise.all(
-        track.photos.map(async (photo) => {
-          // Jeśli zdjęcie już ma url (np. z poprzedniego uploadu), pomiń upload
+        photosToUpload.map(async (photo) => {
           if ("url" in photo && photo.url) return photo;
           const url = await uploadPhotoToBlob(photo);
           return {
             ...photo,
             url,
-           
           };
         })
       );
 
-      // 2. Przygotuj track bez blobów, tylko z urlami
+      // Przygotuj track bez blobów, tylko z urlami
       const trackToSend = {
         ...track,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         photos: photosWithUrls.map(({ blob, ...rest }) => rest),
       };
-console.log("Track to send:", trackToSend); // <-- DODAJ TO TUTAJ
-      // 3. Wyślij trasę do API
+     
+      console.log("Track to send:", trackToSend);
+
+      // Wyślij trasę do API
       const res = await fetch("/api/public-tracks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
