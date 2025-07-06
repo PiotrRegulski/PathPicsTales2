@@ -5,6 +5,6 @@ interface GpsErrorProps {
 export default function GpsError({ error }: GpsErrorProps) {
   if (!error) return null;
   return (
-    <p className="text-center text-red-600 font-semibold">{error}</p>
+    <p className="text-center text-red-600 font-semibold mb-1">{error}</p>
   );
 }
