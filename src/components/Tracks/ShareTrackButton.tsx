@@ -1,14 +1,28 @@
 "use client";
 import React, { useState } from "react";
 import type { Track, Photo } from "@/components/Tracks/types";
+import imageCompression from "browser-image-compression";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
-// Placeholder - zaimplementuj własną kompresję (np. canvas)
-async function compressImage(blob: Blob): Promise<Blob> {
-  // Tu dodaj logikę kompresji zdjęcia
-  // Na razie zwracamy oryginalny blob bez zmian
-  return blob;
+// Funkcja kompresująca Blob i zwracająca File
+async function compressImage(blob: Blob, fileName: string): Promise<File> {
+  const options = {
+    maxSizeMB: 3,           // maksymalny rozmiar po kompresji
+    maxWidthOrHeight: 1024, // maksymalna szerokość lub wysokość
+    useWebWorker: true,
+  };
+  // Convert Blob to File before compression
+  const file = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
+  const compressedBlob = await imageCompression(file, options);
+
+  // Konwersja Blob na File (dodanie nazwy i lastModified)
+  const compressedFile = new File([compressedBlob], fileName, {
+    type: compressedBlob.type,
+    lastModified: Date.now(),
+  });
+
+  return compressedFile;
 }
 
 // Funkcja uploadująca jedno zdjęcie do Vercel Blob
@@ -46,10 +60,12 @@ export default function ShareTrackButton({ track, onSuccess }: ShareTrackButtonP
           if (!confirmCompress) {
             alert("Upload przerwany przez użytkownika.");
             setLoading(false);
-            return; // przerwij cały upload
+            return;
           }
-          const compressedBlob = await compressImage(photo.blob);
-          photosToUpload.push({ ...photo, blob: compressedBlob });
+
+          // Kompresja i konwersja Blob -> File
+          const compressedFile = await compressImage(photo.blob, `${photo.id}.jpg`);
+          photosToUpload.push({ ...photo, blob: compressedFile });
         } else {
           photosToUpload.push(photo);
         }
@@ -73,7 +89,7 @@ export default function ShareTrackButton({ track, onSuccess }: ShareTrackButtonP
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         photos: photosWithUrls.map(({ blob, ...rest }) => rest),
       };
-     
+
       console.log("Track to send:", trackToSend);
 
       // Wyślij trasę do API

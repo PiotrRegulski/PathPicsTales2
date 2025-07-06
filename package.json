@@ -12,6 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@vercel/blob": "^1.1.1",
     "@vercel/postgres": "^0.10.0",
+    "browser-image-compression": "^2.0.2",
     "kalmanjs": "^1.1.0",
     "leaflet": "^1.9.4",
     "next": "^15.3.4",
