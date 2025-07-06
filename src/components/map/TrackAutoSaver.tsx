@@ -51,6 +51,7 @@ export default function TrackAutoSaver({
             trackName,
             timestamp: Date.now(),
           });
+          
           setMessage("✅");
           console.log("TrackAutoSaver: zapisano trasę");
         } catch (error) {
