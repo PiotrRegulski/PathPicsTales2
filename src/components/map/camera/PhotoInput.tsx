@@ -69,7 +69,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       disabled:opacity-50
       focus:outline-none focus:ring-4 focus:ring-red-500
     `}
-    style={{ boxShadow: "0 4px 20px rgba(34,197,94,0.3)" }}
+    aria-label="Dodaj zdjęcie"
   >
     <CameraIcon className="w-8 h-8" />
   </button>
