@@ -10,7 +10,8 @@ async function compressImage(blob: Blob, fileName: string): Promise<File> {
   const options = {
     maxSizeMB: 5,           // maksymalny rozmiar po kompresji
     maxWidthOrHeight: 1920, // maksymalna szerokość lub wysokość
-    useWebWorker: true,
+    useWebWorker: true, // użycie Web Worker do kompresji
+    initialQuality: 0.9, // początkowa jakość kompresji
   };
   // Convert Blob to File before compression
   const file = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
