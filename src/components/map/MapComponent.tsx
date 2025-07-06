@@ -9,7 +9,7 @@ import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
 import { getDistanceFromLatLonInMeters } from "./Utilis";
 import PhotoInput from "./camera/PhotoInput";
-import SaveTrackButton from "./camera/SaveTrackButton";
+// import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
 import TrackAutoSaver from "./TrackAutoSaver";
 import { openDB } from "idb";
@@ -512,7 +512,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4">
+    <div className="flex flex-col items-center">
       <SummaryModal
         isOpen={showSummaryModal}
         onClose={() => setShowSummaryModal(false)}
@@ -577,6 +577,7 @@ useEffect(() => {
             elapsedTime={elapsedTime}
             trackName={trackName}
           />
+          <GpsError error={gpsError} />
           <StatsPanel
             speed={speed}
             distance={distance}
@@ -603,7 +604,7 @@ useEffect(() => {
           >
             Podsumowanie trasy
           </button>
-          <SaveTrackButton
+          {/* <SaveTrackButton
             trackName={trackName}
             track={track}
             distance={distance}
@@ -613,8 +614,8 @@ useEffect(() => {
             onReset={() => {
               setPhotos([]);
             }}
-          />
-          <GpsError error={gpsError} />
+          /> */}
+        
         </>
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>

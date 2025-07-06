@@ -15,8 +15,8 @@ const TrackNameModal: React.FC<TrackNameModalProps> = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/25 bg-opacity-40 w-full">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative mx-4 mr-8">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/25 bg-opacity-40 w-full ">
+      <div className="bg-white rounded-lg shadow-lg p-6 max-w-md relative w-11/12">
         <label
           htmlFor="trackNameInput"
           className="block text-lg font-semibold text-gray-700 mb-2 text-center"

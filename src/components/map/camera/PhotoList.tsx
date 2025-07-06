@@ -32,12 +32,13 @@ export default function PhotoList({
           {/* Tryb edycji */}
           {editingId === id ? (
             <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
+              <textarea
+                placeholder="Dodaj opis..."
                 value={tempDesc}
                 onChange={(e) => setTempDesc(e.target.value)}
-                className="border p-1 rounded"
+                className="border p-1 rounded resize-y w-full min-h-[60px]"
                 autoFocus
+                rows={3} // domyślna wysokość textarea
               />
               <WikiFactFetcher
                 initialKeyword={tempDesc}

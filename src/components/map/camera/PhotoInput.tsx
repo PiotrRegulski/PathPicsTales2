@@ -38,42 +38,42 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 
   return (
-    <div className="photo-input flex gap-2 items-center my-2">
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: "none" }}
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        disabled={!isTracking}
-      />
-      {/* Jeśli chcesz pole opisu, odkomentuj poniżej */}
-      {/* <input
-        type="text"
-        placeholder="Opis zdjęcia"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        disabled={!isTracking}
-        className="border rounded px-2 py-1 flex-grow"
-      /> */}
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={!isTracking}
-        className={`
-          sticky bottom-9 right-6 z-50
-          bg-orange-400 text-white
-          w-16 h-16 rounded-full flex items-center justify-center
-          shadow-lg transition-transform duration-150
-          hover:scale-110 active:scale-90
-          hover:bg-orange-500
-          disabled:opacity-50
-          focus:outline-none focus:ring-4 focus:ring-red-500
-        `}
-        style={{ boxShadow: "0 4px 20px rgba(34,197,94,0.3)" }}
-      >
-        <CameraIcon className="w-8 h-8" />
-      </button>
-    </div>
+    <div className="fixed bottom-2 right-2 z-50 flex gap-2 items-center my-2 shadow-lg shadow-gray-800 rounded-full hover:shadow-xl transition-shadow duration-150">
+  <input
+    type="file"
+    accept="image/*"
+    capture="environment"
+    style={{ display: "none" }}
+    ref={fileInputRef}
+    onChange={handleFileChange}
+    disabled={!isTracking}
+  />
+  {/* Jeśli chcesz pole opisu, odkomentuj poniżej */}
+  {/* <input
+    type="text"
+    placeholder="Opis zdjęcia"
+    value={description}
+    onChange={(e) => setDescription(e.target.value)}
+    disabled={!isTracking}
+    className="border rounded px-2 py-1 flex-grow"
+  /> */}
+  <button
+    onClick={() => fileInputRef.current?.click()}
+    disabled={!isTracking}
+    className={`
+      bg-orange-400 text-white
+      w-16 h-16 rounded-full flex items-center justify-center
+      shadow-lg transition-transform duration-150
+      hover:scale-110 active:scale-90
+      hover:bg-orange-500
+      disabled:opacity-50
+      focus:outline-none focus:ring-4 focus:ring-red-500
+    `}
+    style={{ boxShadow: "0 4px 20px rgba(34,197,94,0.3)" }}
+  >
+    <CameraIcon className="w-8 h-8" />
+  </button>
+</div>
+
   );
 }

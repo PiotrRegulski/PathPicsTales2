@@ -25,7 +25,7 @@ export default function MapView({ userPosition, track, autoCenter }: MapViewProp
     <MapContainer
       center={[userPosition.lat, userPosition.lon]}
       zoom={18}
-      className="h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950 p-2"
+      className="container mx-auto h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950"
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
