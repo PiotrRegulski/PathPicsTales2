@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 // Funkcja kompresująca Blob i zwracająca File
 async function compressImage(blob: Blob, fileName: string): Promise<File> {
   const options = {
-    maxSizeMB: 3,           // maksymalny rozmiar po kompresji
+    maxSizeMB: 5,           // maksymalny rozmiar po kompresji
     maxWidthOrHeight: 1024, // maksymalna szerokość lub wysokość
     useWebWorker: true,
   };
