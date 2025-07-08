@@ -33,9 +33,8 @@ interface MapViewProps {
   autoCenter: boolean;
   photos?: Photo[];
 }
-//  * Pomocnicza funkcja do obliczania odległości w metrach między dwoma punktami GPS
-//  * (współrzędne w stopniach dziesiętnych)
-//  */
+
+// Pomocnicza funkcja do obliczania odległości w metrach między dwoma punktami GPS
 function getDistanceFromLatLonInMeters(
   lat1: number,
   lon1: number,
@@ -52,14 +51,10 @@ function getDistanceFromLatLonInMeters(
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c;
-  return d;
+  return R * c;
 }
 
-/**
- * Funkcja grupująca zdjęcia, które znajdują się blisko siebie (w zadanym promieniu)
- * Zwraca tablicę grup, gdzie każda grupa ma pozycję i listę zdjęć
- */
+// Funkcja grupująca zdjęcia blisko siebie
 function groupPhotosByProximity(
   photos: Photo[],
   radiusMeters = 10
@@ -67,7 +62,6 @@ function groupPhotosByProximity(
   const groups: Array<{ position: UserPosition; photos: Photo[] }> = [];
 
   photos.forEach((photo) => {
-    // Szukamy grupy, do której zdjęcie może należeć (odległość <= radiusMeters)
     const group = groups.find((g) => {
       const dist = getDistanceFromLatLonInMeters(
         g.position.lat,
@@ -79,10 +73,8 @@ function groupPhotosByProximity(
     });
 
     if (group) {
-      // Jeśli grupa istnieje, dodajemy zdjęcie do niej
       group.photos.push(photo);
-
-      // Opcjonalnie: aktualizujemy pozycję grupy jako średnią pozycji zdjęć
+      // Aktualizacja pozycji grupy jako średnia pozycji zdjęć
       const latSum = group.photos.reduce((sum, p) => sum + p.position.lat, 0);
       const lonSum = group.photos.reduce((sum, p) => sum + p.position.lon, 0);
       group.position = {
@@ -90,13 +82,34 @@ function groupPhotosByProximity(
         lon: lonSum / group.photos.length,
       };
     } else {
-      // Jeśli brak pasującej grupy, tworzymy nową z tym zdjęciem
       groups.push({ position: photo.position, photos: [photo] });
     }
   });
 
   return groups;
 }
+
+// Funkcja filtrująca punkty trasy, aby usuwać odległe/skokowe punkty
+function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 50) {
+  if (track.length === 0) return [];
+
+  const filtered = [track[0]];
+  for (let i = 1; i < track.length; i++) {
+    const dist = getDistanceFromLatLonInMeters(
+      filtered[filtered.length - 1].lat,
+      filtered[filtered.length - 1].lon,
+      track[i].lat,
+      track[i].lon
+    );
+    if (dist <= maxDistanceMeters) {
+      filtered.push(track[i]);
+    } else {
+      console.warn(`Punkt pominięty, zbyt duża odległość: ${dist} m`);
+    }
+  }
+  return filtered;
+}
+
 export default function MapView({
   userPosition,
   track,
@@ -104,6 +117,8 @@ export default function MapView({
   photos,
 }: MapViewProps) {
   const groupedPhotos = photos ? groupPhotosByProximity(photos) : [];
+  const filteredTrack = filterTrackPoints(track);
+
   return (
     <MapContainer
       center={[userPosition.lat, userPosition.lon]}
@@ -120,58 +135,55 @@ export default function MapView({
       </Marker>
 
       {/* Linia trasy */}
-      {track.length > 1 && (
+      {filteredTrack.length > 1 && (
         <Polyline
-          positions={track.map((pos) => [pos.lat, pos.lon])}
+          positions={filteredTrack.map((pos) => [pos.lat, pos.lon])}
           color="blue"
         />
       )}
-     
-         {/* Markery grup zdjęć */}
+
+      {/* Markery grup zdjęć */}
       {groupedPhotos.map((group) => (
         <Marker
-          key={`${group.position.lat.toFixed(6)}_${group.position.lon.toFixed(6)}`}
+          key={`${group.position.lat.toFixed(6)}_${group.position.lon.toFixed(
+            6
+          )}`}
           position={[group.position.lat, group.position.lon]}
           icon={photoIcon}
         >
           <Popup>
-            {/* Jeśli tylko jedno zdjęcie w grupie, pokazujemy dużą miniaturę */}
-           {group.photos.length === 1 ? (
-  <PhotoBlobToImage
-    blob={group.photos[0].blob}
-    alt={group.photos[0].description || "Zdjęcie"}
-    width={150}
-    height={100}
-    className="rounded"
-  />
-) : (
-  <div className="flex flex-wrap gap-1 max-w-[300px]">
-    {group.photos.map((photo) => (
-      <div
-        key={photo.id}
-        className="w-[60px] h-[60px] cursor-pointer rounded overflow-hidden"
-      >
-        <PhotoBlobToImage
-          blob={photo.blob}
-          alt={photo.description || "Zdjęcie"}
-          width={60}
-          height={60}
-          className="object-cover"
-        />
-      </div>
-    ))}
-  </div>
-)}
-
+            {group.photos.length === 1 ? (
+              <PhotoBlobToImage
+                blob={group.photos[0].blob}
+                alt={group.photos[0].description || "Zdjęcie"}
+                width={150}
+                height={100}
+                className="rounded"
+              />
+            ) : (
+              <div className="flex flex-wrap gap-1 max-w-[300px]">
+                {group.photos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="w-[60px] h-[60px] cursor-pointer rounded overflow-hidden"
+                  >
+                    <PhotoBlobToImage
+                      blob={photo.blob}
+                      alt={photo.description || "Zdjęcie"}
+                      width={60}
+                      height={60}
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </Popup>
         </Marker>
       ))}
-      {/* Aktualizacja pozycji użytkownika */}
 
-      <MapUpdater
-        position={[userPosition.lat, userPosition.lon]}
-        autoCenter={autoCenter}
-      />
+      {/* Aktualizacja pozycji użytkownika */}
+      <MapUpdater position={[userPosition.lat, userPosition.lon]} autoCenter={autoCenter} />
     </MapContainer>
   );
 }
