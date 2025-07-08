@@ -39,3 +39,55 @@ export async function getDB() {
     },
   });
 }
+
+// Maksymalna liczba próbek prędkości do uśredniania
+const MAX_SPEED_BUFFER_SIZE = 5;
+
+// Maksymalna realistyczna prędkość w km/h (np. dla pieszych)
+// Prędkości powyżej tej wartości będą odrzucane jako błędne
+const MAX_REALISTIC_SPEED = 50;
+
+// Bufor przechowujący ostatnie wartości prędkości
+const speedBuffer: number[] = [];
+
+/**
+ * Aktualizuje prędkość, dodając nową próbkę do bufora,
+ * a następnie oblicza i ustawia średnią prędkość na podstawie bufora.
+ * 
+ * @param newSpeed - nowa zmierzona prędkość (km/h)
+ * @param setSpeed - funkcja ustawiająca prędkość w stanie komponentu
+ */
+export function updateSpeed(newSpeed: number, setSpeed: (val: number) => void) {
+  speedBuffer.push(newSpeed);
+
+  // Usuwamy najstarszą próbkę, jeśli przekroczono rozmiar bufora
+  if (speedBuffer.length > MAX_SPEED_BUFFER_SIZE) {
+    speedBuffer.shift();
+  }
+
+  // Obliczamy średnią prędkość z próbek w buforze
+  const avgSpeed = speedBuffer.reduce((a, b) => a + b, 0) / speedBuffer.length;
+
+  // Ustawiamy uśrednioną prędkość w stanie komponentu
+  setSpeed(avgSpeed);
+}
+
+/**
+ * Oblicza prędkość na podstawie przebytej odległości i czasu.
+ * Odrzuca nierealistyczne prędkości (np. z powodu błędów GPS).
+ * 
+ * @param dist - odległość w metrach między dwoma punktami
+ * @param timeDelta - czas w sekundach między dwoma pomiarami
+ * @returns prędkość w km/h lub 0 jeśli prędkość jest nierealistyczna
+ */
+export function calculateSpeed(dist: number, timeDelta: number): number {
+  if (timeDelta <= 0) return 0;
+
+  // Przeliczamy prędkość z m/s na km/h
+  const speedKmh = (dist / timeDelta) * 3.6;
+
+  // Odrzucamy prędkości powyżej maksymalnej realistycznej wartości
+  if (speedKmh > MAX_REALISTIC_SPEED) return 0;
+
+  return speedKmh;
+}

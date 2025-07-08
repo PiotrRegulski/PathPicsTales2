@@ -7,7 +7,7 @@ import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
-import { getDistanceFromLatLonInMeters } from "./Utilis";
+import { calculateSpeed, getDistanceFromLatLonInMeters, updateSpeed } from "./Utilis";
 import PhotoInput from "./camera/PhotoInput";
 // import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
@@ -331,7 +331,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           const timestamp = position.timestamp || Date.now();
 
           // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
-          let newSpeed = 0;
+          const newSpeed = 0;
           if (previousPositionRef.current && previousTimestampRef.current) {
             const dist = getDistanceFromLatLonInMeters(
               previousPositionRef.current.lat,
@@ -342,8 +342,10 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             const timeDelta = (timestamp - previousTimestampRef.current) / 1000; // w sekundach
 
             if (timeDelta > 0) {
-              const speedMps = dist / timeDelta;
-              newSpeed = speedMps * 3.6; // km/h
+              const calculatedSpeed = calculateSpeed(dist, timeDelta);
+              updateSpeed(calculatedSpeed, setSpeed);
+            } else {
+              updateSpeed(0, setSpeed);
             }
           }
 
