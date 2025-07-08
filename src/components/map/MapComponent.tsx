@@ -59,6 +59,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   const [isWaitingForAccuratePosition, setIsWaitingForAccuratePosition] =
     useState(false);
+  const previousPositionRef = useRef<UserPosition | null>(null);
+  const previousTimestampRef = useRef<number | null>(null);
 
   // --- Nowe stany do wykrywania utraty i odzyskania sygnału GPS ---
   // Flaga informująca, czy obecnie utracono sygnał GPS (np. dokładność ponad MAX_ACCURACY)
@@ -71,57 +73,59 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const firstPointAfterRecovery = useRef<UserPosition | null>(null);
 
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
-useEffect(() => {
-  async function loadOngoingTrack() {
-    if (resume) {
-      try {
-        const db = await openDB("TravelDB", 2, {
-          upgrade(db) {
-            if (!db.objectStoreNames.contains("tempTracks")) {
-              db.createObjectStore("tempTracks", { keyPath: "id" });
-            }
-            if (!db.objectStoreNames.contains("tracks")) {
-              const store = db.createObjectStore("tracks", { keyPath: "id" });
-              store.createIndex("by-date", "date");
-            }
-          },
-        });
+  useEffect(() => {
+    async function loadOngoingTrack() {
+      if (resume) {
+        try {
+          const db = await openDB("TravelDB", 2, {
+            upgrade(db) {
+              if (!db.objectStoreNames.contains("tempTracks")) {
+                db.createObjectStore("tempTracks", { keyPath: "id" });
+              }
+              if (!db.objectStoreNames.contains("tracks")) {
+                const store = db.createObjectStore("tracks", { keyPath: "id" });
+                store.createIndex("by-date", "date");
+              }
+            },
+          });
 
-        // Pobranie trasy o kluczu "ongoing" (tymczasowej)
-        const ongoing = await db.get("tempTracks", "ongoing");
+          // Pobranie trasy o kluczu "ongoing" (tymczasowej)
+          const ongoing = await db.get("tempTracks", "ongoing");
 
-        if (ongoing) {
-          setTrack(ongoing.track || []);
-          setPhotos(ongoing.photos || []);
-          setDistance(ongoing.distance || 0);
-          setElapsedTime(ongoing.elapsedTime || 0);
-          setTrackName(ongoing.trackName || "");
-          setIsTracking(true);
-          setPausedTime(ongoing.travelTime || 0);
-          setStartTime(Date.now());
+          if (ongoing) {
+            setTrack(ongoing.track || []);
+            setPhotos(ongoing.photos || []);
+            setDistance(ongoing.distance || 0);
+            setElapsedTime(ongoing.elapsedTime || 0);
+            setTrackName(ongoing.trackName || "");
+            setIsTracking(true);
+            setPausedTime(ongoing.travelTime || 0);
+            setStartTime(Date.now());
+          }
+        } catch (error) {
+          console.error("Błąd podczas ładowania trasy z IndexedDB:", error);
         }
-      } catch (error) {
-        console.error("Błąd podczas ładowania trasy z IndexedDB:", error);
       }
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
-  }
-  loadOngoingTrack();
-}, [resume]);
+    loadOngoingTrack();
+  }, [resume]);
 
   // --- Funkcja do wywołania map matchingu OSRM przez Twój API route ---
-  async function fetchMatchedRoute(points: UserPosition[]): Promise<UserPosition[]> {
+  async function fetchMatchedRoute(
+    points: UserPosition[]
+  ): Promise<UserPosition[]> {
     if (points.length === 0) return [];
 
     try {
-      const response = await fetch('/api/map-matching', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/map-matching", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ points }),
       });
 
       if (!response.ok) {
-        console.error('Map matching API error:', response.statusText);
+        console.error("Map matching API error:", response.statusText);
         return points; // fallback do surowych punktów
       }
 
@@ -133,9 +137,12 @@ useEffect(() => {
 
       // OSRM zwraca geometry.coordinates jako [lon, lat]
       const matchedCoords = data.matchings[0].geometry.coordinates;
-      return matchedCoords.map((c: [number, number]) => ({ lat: c[1], lon: c[0] }));
+      return matchedCoords.map((c: [number, number]) => ({
+        lat: c[1],
+        lon: c[0],
+      }));
     } catch (error) {
-      console.error('Map matching fetch error:', error);
+      console.error("Map matching fetch error:", error);
       return points;
     }
   }
@@ -177,17 +184,6 @@ useEffect(() => {
       tryGetPosition();
     });
   };
-
-  // --- Efekt do ładowania trasy przy wznowieniu ---
-  useEffect(() => {
-    async function loadOngoingTrack() {
-      if (resume) {
-        // ... Twoja istniejąca logika ładowania z IndexedDB ...
-      }
-      setIsLoaded(true);
-    }
-    loadOngoingTrack();
-  }, [resume]);
 
   // --- Obsługa modalnego okna nazwy trasy ---
   useEffect(() => {
@@ -299,19 +295,24 @@ useEffect(() => {
           // Po odzyskaniu sygnału
           if (lostSignal) {
             setLostSignal(false);
-            const newPosition = {
+            const newPositionRaw = {
               lat: position.coords.latitude,
               lon: position.coords.longitude,
             };
-            firstPointAfterRecovery.current = newPosition;
+            firstPointAfterRecovery.current = newPositionRaw;
 
             // Wywołaj map matching na fragmencie trasy między punktami
-            if (lastPointBeforeLoss.current && firstPointAfterRecovery.current) {
-              const segment = [lastPointBeforeLoss.current, firstPointAfterRecovery.current];
+            if (
+              lastPointBeforeLoss.current &&
+              firstPointAfterRecovery.current
+            ) {
+              const segment = [
+                lastPointBeforeLoss.current,
+                firstPointAfterRecovery.current,
+              ];
               const matchedSegment = await fetchMatchedRoute(segment);
 
               setTrack((prev) => {
-                // Usuń ostatni punkt (lastPointBeforeLoss) i dodaj dopasowany segment
                 const newTrack = [...prev];
                 newTrack.pop();
                 return [...newTrack, ...matchedSegment];
@@ -320,13 +321,35 @@ useEffect(() => {
           }
 
           // Filtrowanie pozycji GPS
-          const filteredLat = latFilter.current.filter(position.coords.latitude);
-          const filteredLon = lonFilter.current.filter(position.coords.longitude);
+          const filteredLat = latFilter.current.filter(
+            position.coords.latitude
+          );
+          const filteredLon = lonFilter.current.filter(
+            position.coords.longitude
+          );
           const newPosition = { lat: filteredLat, lon: filteredLon };
+          const timestamp = position.timestamp || Date.now();
 
-          // Oblicz prędkość w km/h
-          const newSpeed =
-            position.coords.speed != null ? position.coords.speed * 3.6 : 0;
+          // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
+          let newSpeed = 0;
+          if (previousPositionRef.current && previousTimestampRef.current) {
+            const dist = getDistanceFromLatLonInMeters(
+              previousPositionRef.current.lat,
+              previousPositionRef.current.lon,
+              newPosition.lat,
+              newPosition.lon
+            );
+            const timeDelta = (timestamp - previousTimestampRef.current) / 1000; // w sekundach
+
+            if (timeDelta > 0) {
+              const speedMps = dist / timeDelta;
+              newSpeed = speedMps * 3.6; // km/h
+            }
+          }
+
+          // Aktualizuj poprzednie wartości
+          previousPositionRef.current = newPosition;
+          previousTimestampRef.current = timestamp;
 
           // Aktualizuj pozycję i trasę tylko jeśli prędkość >= MIN_SPEED i odległość >= MIN_DISTANCE
           if (newSpeed >= MIN_SPEED) {
@@ -384,7 +407,7 @@ useEffect(() => {
       }
     };
   }, [isTracking, startTime, lostSignal, userPosition]);
-
+  
   // --- Aktualizacja elapsedTime (liczonego tylko podczas ruchu) ---
   useEffect(() => {
     if (!isTracking) return;
@@ -616,7 +639,6 @@ useEffect(() => {
               setPhotos([]);
             }}
           /> */}
-        
         </>
       ) : (
         <p className="text-center">⏳ Pobieranie Twojej lokalizacji...</p>
