@@ -25,7 +25,7 @@ type MapComponentProps = {
 
 const MIN_DISTANCE = 3; // minimalna odległość w metrach
 const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
-const MAX_ACCURACY = 15; // maksymalna akceptowalna dokładność GPS w metrach
+const MAX_ACCURACY = 20; // maksymalna akceptowalna dokładność GPS w metrach
 
 const MapComponent = ({ resume = false }: MapComponentProps) => {
   // --- Stany podstawowe ---
@@ -407,7 +407,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       }
     };
   }, [isTracking, startTime, lostSignal, userPosition]);
-  
+
   // --- Aktualizacja elapsedTime (liczonego tylko podczas ruchu) ---
   useEffect(() => {
     if (!isTracking) return;
