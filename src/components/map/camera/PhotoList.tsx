@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import type { Photo } from "@/components/map/types";
 import WikiFactFetcher from "@/components/WikiFactFetcher";
 import PhotoBlobImage from "@/components/map/camera/PhotoBlobToImage";
+import LocationName from "./LocationName";
 type PhotoListProps = {
   photos: Photo[];
   onEditDescription: (photoId: string, newDescription: string) => void;
@@ -20,7 +21,7 @@ export default function PhotoList({
 
   return (
     <div className="photo-list mt-4 grid grid-cols-1 gap-2 my-4">
-      {photos.map(({ id, blob, description, timestamp }) => (
+      {photos.map(({ id, blob, description, timestamp,position }) => (
         <div key={id} className="border rounded shadow p-2">
           <PhotoBlobImage
             blob={blob}
@@ -89,11 +90,11 @@ export default function PhotoList({
           <small className="text-gray-500 block">
             {new Date(timestamp).toLocaleString()}
           </small>
-          {/* {position && (
+          {position && (
             <small className="text-gray-400 block">
-              Pozycja: {position.lat.toFixed(5)}, {position.lon.toFixed(5)}
+              {position && <LocationName lat={position.lat} lon={position.lon} />}
             </small>
-          )} */}
+          )}
         </div>
       ))}
     </div>
