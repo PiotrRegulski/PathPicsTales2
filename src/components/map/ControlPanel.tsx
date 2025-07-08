@@ -52,7 +52,7 @@ export default function ControlPanel({
         onClick={() => setAutoCenter(!autoCenter)}
         className="px-4 py-2 bg-blue-500 rounded text-white hover:bg-blue-600"
       >
-        {autoCenter ? "Wyłącz śledzenie mapy" : "Włącz śledzenie mapy"}
+        {autoCenter ? "Wyłącz centrowanie" : "Włącz centrowanie"}
       </button>
     
     </div>
