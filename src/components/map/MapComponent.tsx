@@ -27,8 +27,8 @@ type MapComponentProps = {
   resume?: boolean;
 };
 
-const MIN_DISTANCE = 3; // minimalna odległość w metrach
-const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
+const MIN_DISTANCE = 4; // minimalna odległość w metrach
+const MIN_SPEED = 4; // minimalna prędkość w km/h do liczenia elapsedTime
 const MAX_ACCURACY = 20; // maksymalna akceptowalna dokładność GPS w metrach
 
 const MapComponent = ({ resume = false }: MapComponentProps) => {
@@ -657,8 +657,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           setTimeout(() => setScreenLocked(true), 400);
         }}
       />
-      <div className="mt-4">
-        <small className="text-gray-500">
+      <div className="mt-4 ">
+        <small className="text-gray-500 text-center">
           Aplikacja korzysta z geolokalizacji. Upewnij się, że masz włączone
           usługi lokalizacji.
         </small>
