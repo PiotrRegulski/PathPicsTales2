@@ -342,11 +342,14 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             const timeDelta = (timestamp - previousTimestampRef.current) / 1000; // w sekundach
 
             if (timeDelta > 0) {
-              const calculatedSpeed = calculateSpeed(dist, timeDelta);
-              updateSpeed(calculatedSpeed, setSpeed);
-            } else {
-              updateSpeed(0, setSpeed);
-            }
+    newSpeed = calculateSpeed(dist, timeDelta);
+    updateSpeed(newSpeed, setSpeed);
+  } else {
+    updateSpeed(0, setSpeed);
+  }
+} else {
+  updateSpeed(0, setSpeed);
+}
           }
 
           // Aktualizuj poprzednie wartości
