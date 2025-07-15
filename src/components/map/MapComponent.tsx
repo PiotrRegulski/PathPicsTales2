@@ -7,7 +7,11 @@ import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
 import GpsError from "./GpsError";
-import { calculateSpeed, getDistanceFromLatLonInMeters, updateSpeed } from "./Utilis";
+import {
+  calculateSpeed,
+  getDistanceFromLatLonInMeters,
+  updateSpeed,
+} from "./Utilis";
 import PhotoInput from "./camera/PhotoInput";
 // import SaveTrackButton from "./camera/SaveTrackButton";
 import PhotoList from "./camera/PhotoList";
@@ -331,7 +335,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           const timestamp = position.timestamp || Date.now();
 
           // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
-          const newSpeed = 0;
+          let newSpeed = 0;
           if (previousPositionRef.current && previousTimestampRef.current) {
             const dist = getDistanceFromLatLonInMeters(
               previousPositionRef.current.lat,
@@ -342,14 +346,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             const timeDelta = (timestamp - previousTimestampRef.current) / 1000; // w sekundach
 
             if (timeDelta > 0) {
-    newSpeed = calculateSpeed(dist, timeDelta);
-    updateSpeed(newSpeed, setSpeed);
-  } else {
-    updateSpeed(0, setSpeed);
-  }
-} else {
-  updateSpeed(0, setSpeed);
-}
+              newSpeed = calculateSpeed(dist, timeDelta);
+              updateSpeed(newSpeed, setSpeed);
+            } else {
+              updateSpeed(0, setSpeed);
+            }
+          } else {
+            updateSpeed(0, setSpeed);
           }
 
           // Aktualizuj poprzednie wartości
@@ -654,10 +657,12 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           setTimeout(() => setScreenLocked(true), 400);
         }}
       />
-      <ScreenLock
-        active={screenLocked}
-        onUnlock={() => setScreenLocked(false)}
-      />
+      <div className="mt-4">
+        <small className="text-gray-500">
+          Aplikacja korzysta z geolokalizacji. Upewnij się, że masz włączone
+          usługi lokalizacji.
+        </small>
+      </div>
     </div>
   );
 };
