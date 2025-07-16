@@ -41,11 +41,11 @@ export async function getDB() {
 }
 
 // Maksymalna liczba próbek prędkości do uśredniania
-const MAX_SPEED_BUFFER_SIZE = 5;
+const MAX_SPEED_BUFFER_SIZE = 10;
 
 // Maksymalna realistyczna prędkość w km/h (np. dla pieszych)
 // Prędkości powyżej tej wartości będą odrzucane jako błędne
-const MAX_REALISTIC_SPEED = 50;
+const MAX_REALISTIC_SPEED = 100;
 
 // Bufor przechowujący ostatnie wartości prędkości
 const speedBuffer: number[] = [];

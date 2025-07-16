@@ -28,7 +28,7 @@ type MapComponentProps = {
 };
 
 const MIN_DISTANCE = 4; // minimalna odległość w metrach
-const MIN_SPEED = 4; // minimalna prędkość w km/h do liczenia elapsedTime
+const MIN_SPEED = 3; // minimalna prędkość w km/h do liczenia elapsedTime
 const MAX_ACCURACY = 20; // maksymalna akceptowalna dokładność GPS w metrach
 
 const MapComponent = ({ resume = false }: MapComponentProps) => {
@@ -54,7 +54,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [pausedElapsed, setPausedElapsed] = useState<number>(0);
 
   // --- Kalman filter for smoothing GPS data ---
-  const KALMAN_PARAMS = { R: 0.01, Q: 3 };
+  const KALMAN_PARAMS = { R: 0.01, Q: 1 };
   const latFilter = useRef(new KalmanFilter(KALMAN_PARAMS));
   const lonFilter = useRef(new KalmanFilter(KALMAN_PARAMS));
 
@@ -151,7 +151,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     }
   }
 
-  // --- Przykładowa funkcja pobierająca dokładną pozycję GPS ---
+  // ---funkcja pobierająca dokładną pozycję GPS ---
   const getAccuratePosition = (
     maxAttempts = 10
   ): Promise<GeolocationPosition> => {
@@ -332,7 +332,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             position.coords.longitude
           );
           const newPosition = { lat: filteredLat, lon: filteredLon };
-          const timestamp = position.timestamp || Date.now();
+          const timestamp = Date.now();
 
           // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
           let newSpeed = 0;
@@ -347,6 +347,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
             if (timeDelta > 0) {
               newSpeed = calculateSpeed(dist, timeDelta);
+              console.log("Dist:", dist, "TimeDelta:", timeDelta, "NewSpeed:", newSpeed); 
               updateSpeed(newSpeed, setSpeed);
             } else {
               updateSpeed(0, setSpeed);
