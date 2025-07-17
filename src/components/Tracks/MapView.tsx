@@ -30,14 +30,13 @@ const MapView: React.FC<MapViewProps> = ({
   onPhotoMarkerClick,
 }) => {
 
-  if (
-    !track ||
-    track.length === 0 ||
-    typeof track[0].lat !== "number" ||
-    typeof track[0].lon !== "number"
-  ) {
-    return <p>Brak poprawnych danych trasy do wyświetlenia na mapie.</p>;
-  }
+ if (
+  (!track || track.length === 0) &&
+  (!photoMarkers || photoMarkers.length === 0)
+) {
+  return <p>Brak danych do wyświetlenia na mapie.</p>;
+}
+
 
   const icon = new L.Icon({
     iconUrl: "/img/photoIcon.png",
@@ -49,7 +48,7 @@ const MapView: React.FC<MapViewProps> = ({
     <MapContainer
       center={[52.2297, 21.0122]} // domyślne centrum, np. Warszawa
       zoom={6} // domyślny, szeroki zoom
-      style={{ height: "400px", width: "100%" }}
+      style={{ height: "600px", width: "100%" }}
     >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"

@@ -21,6 +21,12 @@ const StartTour = () => {
             Zapisane Trasy
           </button>
         </Link>
+          <Link href="/ciekawe-miejsca" className="text-blue-500 hover:underline mb-4">
+          {" "}
+          <button className="px-6 py-3 bg-orange-500 text-blue-950 rounded-lg hover:bg-orange-600 active:bg-amber-800 transition duration-300 w-48 ">
+            Ciekawe miejsca
+          </button>
+        </Link>
           <Link href="/trasy-uzytkownikow" className="text-blue-500 hover:underline mb-4">
           {" "}
           <button className="px-6 py-3 bg-orange-500 text-blue-950 rounded-lg hover:bg-orange-600 active:bg-amber-800 transition duration-300 w-48 ">
