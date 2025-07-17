@@ -21,14 +21,14 @@ const TrackNameModal: React.FC<TrackNameModalProps> = ({
           htmlFor="trackNameInput"
           className="block text-lg font-semibold text-gray-700 mb-2 text-center"
         >
-          Podaj nazwę trasy, a następnie kliknij <span className="text-blue-600 font-bold">Start</span>
+          Nadaj swojemu albumowi unikalną nazwę, aby łatwiej wracać do wspomnień z tej podróży!<br></br>Następnie kliknij <span className="text-blue-600 font-bold">Start</span>
         </label>
         <input
           id="trackNameInput"
           type="text"
           value={trackName}
           onChange={e => setTrackName(e.target.value)}
-          placeholder="Np. Poranny spacer po parku"
+          placeholder="Np. Mazury 2025 — najciekawsze miejsca"
           className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition placeholder-gray-400 text-base"
           autoComplete="off"
           maxLength={64}
