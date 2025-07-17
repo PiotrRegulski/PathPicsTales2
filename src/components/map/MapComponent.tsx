@@ -324,15 +324,38 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             }
           }
 
-          // Filtrowanie pozycji GPS
-          const filteredLat = latFilter.current.filter(
-            position.coords.latitude
+           // 3. ------ FILTR OUTLIERÓW PRZED KALMANEM! ------
+        const rawLat = position.coords.latitude;
+        const rawLon = position.coords.longitude;
+
+        let isJump = false;
+        if (previousPositionRef.current) {
+          // próg np. 30m
+          const distRaw = getDistanceFromLatLonInMeters(
+            previousPositionRef.current.lat,
+            previousPositionRef.current.lon,
+            rawLat,
+            rawLon
           );
-          const filteredLon = lonFilter.current.filter(
-            position.coords.longitude
+          isJump = distRaw > 30;
+        }
+
+        if (isJump) {
+          // Debug/log (opcjonalnie)
+          console.log(
+            "Odrzucono outlier GPS (skok ponad 30m):",
+            rawLat,
+            rawLon
           );
-          const newPosition = { lat: filteredLat, lon: filteredLon };
-          const timestamp = Date.now();
+          return; // NIE przepuszczaj tego punktu dalej!
+        }
+
+        // 4. Filtrowanie przez Kalman
+        const filteredLat = latFilter.current.filter(rawLat);
+        const filteredLon = lonFilter.current.filter(rawLon);
+        const newPosition = { lat: filteredLat, lon: filteredLon };
+        const timestamp = Date.now();
+
 
           // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
           let newSpeed = 0;
@@ -529,6 +552,14 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setElapsedStart(null);
     setPausedElapsed(0);
     setGpsError(null);
+
+     // RESET FILTRÓW KALMANA:
+  latFilter.current = new KalmanFilter(KALMAN_PARAMS);
+  lonFilter.current = new KalmanFilter(KALMAN_PARAMS);
+
+  // zresetować rejestry previousPositionRef)
+  previousPositionRef.current = null;
+  previousTimestampRef.current = null;
   };
 
   // --- Edycja opisu zdjęcia ---
@@ -590,7 +621,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       {userPosition ? (
         <>
           <h2 className="text-black font-semibold text-xl">
-            Trasa: {trackName}
+            Album: {trackName}
           </h2>
           <MapView
             userPosition={userPosition}
@@ -658,11 +689,12 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           setTimeout(() => setScreenLocked(true), 400);
         }}
       />
-      <div className="mt-4 ">
-        <small className="text-gray-500 text-center">
+      <div className=" flex mt-4 w-full justify-center items-center">
+        <div className="w-full text-center">   <small className="text-gray-500 text-xs">
           Aplikacja korzysta z geolokalizacji. Upewnij się, że masz włączone
           usługi lokalizacji.
-        </small>
+        </small></div>
+     
       </div>
     </div>
   );
