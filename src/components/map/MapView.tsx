@@ -90,7 +90,7 @@ function groupPhotosByProximity(
 }
 
 // Funkcja filtrująca punkty trasy, aby usuwać odległe/skokowe punkty
-function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 50) {
+function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 20) {
   if (track.length === 0) return [];
 
   const filtered = [track[0]];
