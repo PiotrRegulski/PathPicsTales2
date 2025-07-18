@@ -65,6 +65,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     useState(false);
   const previousPositionRef = useRef<UserPosition | null>(null);
   const previousTimestampRef = useRef<number | null>(null);
+  const lastValidSpeedRef = useRef<number>(0); // przechowuje ostatnią dobrą prędkość
 
   // --- Nowe stany do wykrywania utraty i odzyskania sygnału GPS ---
   // Flaga informująca, czy obecnie utracono sygnał GPS (np. dokładność ponad MAX_ACCURACY)
@@ -280,14 +281,15 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [isTracking, startTime, pausedTime]);
 
   // --- Śledzenie pozycji GPS z obsługą utraty i odzyskania sygnału ---
+
   useEffect(() => {
     if (!isTracking) return;
     let watchId: number | undefined;
 
-     if ("geolocation" in navigator) {
+    if ("geolocation" in navigator) {
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
-          // --- Obsługa dokładności ---
+          // Obsługa dokładności
           if (position.coords.accuracy > MAX_ACCURACY) {
             if (!lostSignal) {
               setLostSignal(true);
@@ -296,6 +298,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             return;
           }
 
+          // Po odzyskaniu sygnału
           if (lostSignal) {
             setLostSignal(false);
             const newPositionRaw = {
@@ -304,8 +307,14 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             };
             firstPointAfterRecovery.current = newPositionRaw;
 
-            if (lastPointBeforeLoss.current && firstPointAfterRecovery.current) {
-              const segment = [lastPointBeforeLoss.current, firstPointAfterRecovery.current];
+            if (
+              lastPointBeforeLoss.current &&
+              firstPointAfterRecovery.current
+            ) {
+              const segment = [
+                lastPointBeforeLoss.current,
+                firstPointAfterRecovery.current,
+              ];
               const matchedSegment = await fetchMatchedRoute(segment);
               setTrack((prev) => {
                 const newTrack = [...prev];
@@ -315,10 +324,11 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             }
           }
 
-          // --- Outlier detection ---
+          // Detekcja outlierów (skok pozycji powyżej 30m)
           const rawLat = position.coords.latitude;
           const rawLon = position.coords.longitude;
           let isJump = false;
+
           if (previousPositionRef.current) {
             const distRaw = getDistanceFromLatLonInMeters(
               previousPositionRef.current.lat,
@@ -328,25 +338,35 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             );
             isJump = distRaw > 30;
           }
+
           if (isJump) {
-            console.log("Odrzucono outlier GPS (skok ponad 30m):", rawLat, rawLon);
+            console.log(
+              "Odrzucono outlier GPS (skok ponad 30m):",
+              rawLat,
+              rawLon
+            );
             return;
           }
 
-          // --- Kalman filtration ---
+          // Filtrowanie Kalmanem
           const filteredLat = latFilter.current.filter(rawLat);
           const filteredLon = lonFilter.current.filter(rawLon);
           const newPosition = { lat: filteredLat, lon: filteredLon };
           const timestamp = Date.now();
 
-          // --- MOD: Użycie coords.speed gdy dostępne ---
-          let newSpeed = 0;
+          // Obliczanie prędkości
           const rawSpeed = position.coords.speed; // m/s lub null
+          let newSpeed = 0;
+
           if (rawSpeed !== null && rawSpeed >= 0) {
-            newSpeed = rawSpeed * 3.6; // km/h
-            if (newSpeed > MAX_REALISTIC_SPEED) newSpeed = 0;
-            updateSpeed(newSpeed, setSpeed);
-          } else if (previousPositionRef.current && previousTimestampRef.current) {
+            newSpeed = rawSpeed * 3.6; // konwersja na km/h
+            if (newSpeed > MAX_REALISTIC_SPEED) {
+              newSpeed = 0;
+            }
+          } else if (
+            previousPositionRef.current &&
+            previousTimestampRef.current
+          ) {
             const dist = getDistanceFromLatLonInMeters(
               previousPositionRef.current.lat,
               previousPositionRef.current.lon,
@@ -354,29 +374,37 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
               newPosition.lon
             );
             const timeDelta = (timestamp - previousTimestampRef.current) / 1000;
+
             if (timeDelta > 0) {
               newSpeed = calculateSpeed(dist, timeDelta);
-              updateSpeed(newSpeed, setSpeed);
-            } else {
-              updateSpeed(0, setSpeed);
             }
-          } else {
-            updateSpeed(0, setSpeed);
           }
 
+          // Jeśli prędkość jest większa od zera, zapisujemy jako ostatnio ważną
+          if (newSpeed > 0) {
+            lastValidSpeedRef.current = newSpeed;
+            updateSpeed(newSpeed, setSpeed);
+          } else {
+            // W przeciwnym wypadku wyświetlamy ostatnią ważną prędkość (nie zerujemy)
+            updateSpeed(lastValidSpeedRef.current, setSpeed);
+          }
+
+          // Aktualizacja referencji poprzedniej pozycji i czasu
           previousPositionRef.current = newPosition;
           previousTimestampRef.current = timestamp;
 
-          // Aktualizuj pozycję i trasę tylko jeśli prędkość >= MIN_SPEED i odległość >= MIN_DISTANCE
+          // Aktualizacja pozycji i trasy tylko jeśli prędkość >= MIN_SPEED i odległość >= MIN_DISTANCE
           if (newSpeed >= MIN_SPEED) {
             setUserPosition((prevPosition) => {
               if (!prevPosition) return newPosition;
+
               const dist = getDistanceFromLatLonInMeters(
                 prevPosition.lat,
                 prevPosition.lon,
                 newPosition.lat,
                 newPosition.lon
               );
+
               if (dist < MIN_DISTANCE) {
                 return prevPosition;
               }
@@ -400,14 +428,18 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
                 newPosition.lat,
                 newPosition.lon
               );
+
               if (dist >= MIN_DISTANCE) {
                 setDistance((prevDistance) => prevDistance + dist);
                 return [...prevTrack, newPosition];
               }
+
               return prevTrack;
             });
           } else {
-            setSpeed(0);
+            // Przy prędkości poniżej progu nie aktualizujemy pozycji i trasy
+            // Jeśli chcesz, możesz tu ustawić speed na lastValidSpeedRef lub 0 — zależy od UX
+            setSpeed(lastValidSpeedRef.current);
           }
         },
         (error) => {
@@ -537,13 +569,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     setPausedElapsed(0);
     setGpsError(null);
 
-     // RESET FILTRÓW KALMANA:
-  latFilter.current = new KalmanFilter(KALMAN_PARAMS);
-  lonFilter.current = new KalmanFilter(KALMAN_PARAMS);
+    // RESET FILTRÓW KALMANA:
+    latFilter.current = new KalmanFilter(KALMAN_PARAMS);
+    lonFilter.current = new KalmanFilter(KALMAN_PARAMS);
 
-  // zresetować rejestry previousPositionRef)
-  previousPositionRef.current = null;
-  previousTimestampRef.current = null;
+    // zresetować rejestry previousPositionRef)
+    previousPositionRef.current = null;
+    previousTimestampRef.current = null;
   };
 
   // --- Edycja opisu zdjęcia ---
@@ -674,11 +706,13 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
         }}
       />
       <div className=" flex mt-4 w-full justify-center items-center">
-        <div className="w-full text-center">   <small className="text-gray-500 text-xs">
-          Aplikacja korzysta z geolokalizacji. Upewnij się, że masz włączone
-          usługi lokalizacji.
-        </small></div>
-     
+        <div className="w-full text-center">
+          {" "}
+          <small className="text-gray-500 text-xs">
+            Aplikacja korzysta z geolokalizacji. Upewnij się, że masz włączone
+            usługi lokalizacji.
+          </small>
+        </div>
       </div>
     </div>
   );
