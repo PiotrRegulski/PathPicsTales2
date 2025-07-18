@@ -30,7 +30,7 @@ type MapComponentProps = {
 const MIN_DISTANCE = 7; // minimalna odległość w metrach
 const MIN_SPEED = 4; // minimalna prędkość w km/h do liczenia elapsedTime
 const MAX_ACCURACY = 20; // maksymalna akceptowalna dokładność GPS w metrach
-
+const MAX_REALISTIC_SPEED = 50; // maksymalna realistyczna prędkość w km/h (np. dla pieszych)
 const MapComponent = ({ resume = false }: MapComponentProps) => {
   // --- Stany podstawowe ---
   const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
@@ -284,19 +284,18 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     if (!isTracking) return;
     let watchId: number | undefined;
 
-    if ("geolocation" in navigator) {
+     if ("geolocation" in navigator) {
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
-          // Jeśli dokładność jest zbyt słaba, traktuj jako utratę sygnału
+          // --- Obsługa dokładności ---
           if (position.coords.accuracy > MAX_ACCURACY) {
             if (!lostSignal) {
               setLostSignal(true);
-              lastPointBeforeLoss.current = userPosition; // zapisz ostatni punkt przed utratą
+              lastPointBeforeLoss.current = userPosition;
             }
-            return; // nie aktualizuj pozycji
+            return;
           }
 
-          // Po odzyskaniu sygnału
           if (lostSignal) {
             setLostSignal(false);
             const newPositionRaw = {
@@ -305,17 +304,9 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             };
             firstPointAfterRecovery.current = newPositionRaw;
 
-            // Wywołaj map matching na fragmencie trasy między punktami
-            if (
-              lastPointBeforeLoss.current &&
-              firstPointAfterRecovery.current
-            ) {
-              const segment = [
-                lastPointBeforeLoss.current,
-                firstPointAfterRecovery.current,
-              ];
+            if (lastPointBeforeLoss.current && firstPointAfterRecovery.current) {
+              const segment = [lastPointBeforeLoss.current, firstPointAfterRecovery.current];
               const matchedSegment = await fetchMatchedRoute(segment);
-
               setTrack((prev) => {
                 const newTrack = [...prev];
                 newTrack.pop();
@@ -324,53 +315,47 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             }
           }
 
-           // 3. ------ FILTR OUTLIERÓW PRZED KALMANEM! ------
-        const rawLat = position.coords.latitude;
-        const rawLon = position.coords.longitude;
+          // --- Outlier detection ---
+          const rawLat = position.coords.latitude;
+          const rawLon = position.coords.longitude;
+          let isJump = false;
+          if (previousPositionRef.current) {
+            const distRaw = getDistanceFromLatLonInMeters(
+              previousPositionRef.current.lat,
+              previousPositionRef.current.lon,
+              rawLat,
+              rawLon
+            );
+            isJump = distRaw > 30;
+          }
+          if (isJump) {
+            console.log("Odrzucono outlier GPS (skok ponad 30m):", rawLat, rawLon);
+            return;
+          }
 
-        let isJump = false;
-        if (previousPositionRef.current) {
-          // próg np. 30m
-          const distRaw = getDistanceFromLatLonInMeters(
-            previousPositionRef.current.lat,
-            previousPositionRef.current.lon,
-            rawLat,
-            rawLon
-          );
-          isJump = distRaw > 30;
-        }
+          // --- Kalman filtration ---
+          const filteredLat = latFilter.current.filter(rawLat);
+          const filteredLon = lonFilter.current.filter(rawLon);
+          const newPosition = { lat: filteredLat, lon: filteredLon };
+          const timestamp = Date.now();
 
-        if (isJump) {
-          // Debug/log (opcjonalnie)
-          console.log(
-            "Odrzucono outlier GPS (skok ponad 30m):",
-            rawLat,
-            rawLon
-          );
-          return; // NIE przepuszczaj tego punktu dalej!
-        }
-
-        // 4. Filtrowanie przez Kalman
-        const filteredLat = latFilter.current.filter(rawLat);
-        const filteredLon = lonFilter.current.filter(rawLon);
-        const newPosition = { lat: filteredLat, lon: filteredLon };
-        const timestamp = Date.now();
-
-
-          // Oblicz prędkość na podstawie filtrowanych pozycji i różnicy czasu
+          // --- MOD: Użycie coords.speed gdy dostępne ---
           let newSpeed = 0;
-          if (previousPositionRef.current && previousTimestampRef.current) {
+          const rawSpeed = position.coords.speed; // m/s lub null
+          if (rawSpeed !== null && rawSpeed >= 0) {
+            newSpeed = rawSpeed * 3.6; // km/h
+            if (newSpeed > MAX_REALISTIC_SPEED) newSpeed = 0;
+            updateSpeed(newSpeed, setSpeed);
+          } else if (previousPositionRef.current && previousTimestampRef.current) {
             const dist = getDistanceFromLatLonInMeters(
               previousPositionRef.current.lat,
               previousPositionRef.current.lon,
               newPosition.lat,
               newPosition.lon
             );
-            const timeDelta = (timestamp - previousTimestampRef.current) / 1000; // w sekundach
-
+            const timeDelta = (timestamp - previousTimestampRef.current) / 1000;
             if (timeDelta > 0) {
               newSpeed = calculateSpeed(dist, timeDelta);
-              console.log("Dist:", dist, "TimeDelta:", timeDelta, "NewSpeed:", newSpeed); 
               updateSpeed(newSpeed, setSpeed);
             } else {
               updateSpeed(0, setSpeed);
@@ -379,7 +364,6 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             updateSpeed(0, setSpeed);
           }
 
-          // Aktualizuj poprzednie wartości
           previousPositionRef.current = newPosition;
           previousTimestampRef.current = timestamp;
 
