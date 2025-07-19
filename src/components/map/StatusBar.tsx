@@ -10,7 +10,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
   isMapMatchingActive,
 }) => {
   return (
-    <div className="status-bar p-2 bg-gray-100 rounded-md flex gap-4 text-sm font-medium">
+    <div className="status-bar p-2 bg-gray-100 rounded-md flex gap-4 text-sm font-medium my-2">
       <span>
         Sygnał GPS:{" "}
         {isGpsSignalGood ? (
