@@ -22,6 +22,7 @@ import TrackNameModal from "./TrackNameModal";
 import type { Photo, UserPosition } from "@/components/map/types";
 import ScreenLockButton from "./ScreenLockButton";
 import { SummaryModal } from "./SummaryModal";
+import GpsAccuracyDisplay from "./GpsAccuracyDisplay";
 
 type MapComponentProps = {
   resume?: boolean;
@@ -29,7 +30,7 @@ type MapComponentProps = {
 
 const MIN_DISTANCE = 7; // minimalna odległość w metrach
 const MIN_SPEED = 4; // minimalna prędkość w km/h do liczenia elapsedTime
-const MAX_ACCURACY = 20; // maksymalna akceptowalna dokładność GPS w metrach
+const MAX_ACCURACY = 30; // maksymalna akceptowalna dokładność GPS w metrach
 const MAX_REALISTIC_SPEED = 50; // maksymalna realistyczna prędkość w km/h (np. dla pieszych)
 const MapComponent = ({ resume = false }: MapComponentProps) => {
   // --- Stany podstawowe ---
@@ -66,7 +67,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const previousPositionRef = useRef<UserPosition | null>(null);
   const previousTimestampRef = useRef<number | null>(null);
   const lastValidSpeedRef = useRef<number>(0); // przechowuje ostatnią dobrą prędkość
-
+const isMatchingRef = useRef(false);
   // --- Nowe stany do wykrywania utraty i odzyskania sygnału GPS ---
   // Flaga informująca, czy obecnie utracono sygnał GPS (np. dokładność ponad MAX_ACCURACY)
   const [lostSignal, setLostSignal] = useState(false);
@@ -76,7 +77,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   // Referencja do pierwszego punktu z dokładnym sygnałem GPS po odzyskaniu sygnału
   const firstPointAfterRecovery = useRef<UserPosition | null>(null);
-
+const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
   useEffect(() => {
     async function loadOngoingTrack() {
@@ -290,6 +291,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
           // Obsługa dokładności
+          setGpsAccuracy(position.coords.accuracy);
           if (position.coords.accuracy > MAX_ACCURACY) {
             if (!lostSignal) {
               setLostSignal(true);
@@ -487,16 +489,25 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   }, [elapsedStart, pausedElapsed]);
 
   // --- Map matching co 10 sekund na całej trasie ---
-  useEffect(() => {
-    if (!isTracking || track.length < 5) return;
+ useEffect(() => {
+  if (!isTracking || track.length < 5) return;
 
-    const interval = setInterval(async () => {
+  const performMapMatching = async () => {
+    if (isMatchingRef.current) return; // Nie zaczynaj jeśli trwa inne wywołanie
+    isMatchingRef.current = true;
+    try {
       const matched = await fetchMatchedRoute(track);
-      setTrack(matched);
-    }, 10000);
+      setTrack((prevTrack) => matched.length ? matched : prevTrack);
+    } finally {
+      isMatchingRef.current = false;
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, [isTracking, track]);
+  performMapMatching(); // Raz od razu
+  const interval = setInterval(performMapMatching, 10000);
+
+  return () => clearInterval(interval);
+}, [isTracking, track]);
 
   // --- Dodawanie zdjęć ---
   const handleAddPhoto = (photo: Photo) => {
@@ -658,6 +669,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             trackName={trackName}
           />
           <GpsError error={gpsError} />
+          <GpsAccuracyDisplay accuracy={gpsAccuracy} />
           <StatsPanel
             speed={speed}
             distance={distance}
