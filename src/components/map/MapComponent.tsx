@@ -23,6 +23,7 @@ import type { Photo, UserPosition } from "@/components/map/types";
 import ScreenLockButton from "./ScreenLockButton";
 import { SummaryModal } from "./SummaryModal";
 import GpsAccuracyDisplay from "./GpsAccuracyDisplay";
+import StatusBar from "./StatusBar";
 
 type MapComponentProps = {
   resume?: boolean;
@@ -78,6 +79,17 @@ const isMatchingRef = useRef(false);
   // Referencja do pierwszego punktu z dokładnym sygnałem GPS po odzyskaniu sygnału
   const firstPointAfterRecovery = useRef<UserPosition | null>(null);
 const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+
+// Stan informujący, czy obecnie trwa proces map matchingu (map matching)
+// Przyjmuje wartość true w trakcie wykonywania map matchingu, false poza tym czasem
+const [isMapMatchingActive, setIsMapMatchingActive] = useState(false);
+
+// Stan określający, czy jakość sygnału GPS jest wystarczająco dobra
+// true oznacza dobry, stabilny sygnał (np. zgodny z wymaganym progiem dokładności)
+// false oznacza słaby lub utracony sygnał GPS
+const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
+
+
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
   useEffect(() => {
     async function loadOngoingTrack() {
@@ -153,7 +165,7 @@ const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
     }
   }
 
-  // ---funkcja pobierająca dokładną pozycję GPS ---
+  // ---funkcja pobierająca dokładną pozycję GPS przy pauzie---
   const getAccuratePosition = (
     maxAttempts = 10
   ): Promise<GeolocationPosition> => {
@@ -291,6 +303,7 @@ const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
       watchId = navigator.geolocation.watchPosition(
         async (position) => {
           // Obsługa dokładności
+          setIsGpsSignalGood(position.coords.accuracy <= MAX_ACCURACY);
           setGpsAccuracy(position.coords.accuracy);
           if (position.coords.accuracy > MAX_ACCURACY) {
             if (!lostSignal) {
@@ -460,21 +473,27 @@ const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
 
   // --- Aktualizacja elapsedTime (liczonego tylko podczas ruchu) ---
   useEffect(() => {
-    if (!isTracking) return;
+  if (!isTracking) {
+    // Gdy śledzenie jest wyłączone, resetuj stany
+    setElapsedStart(null);
+    setPausedElapsed(0);
+    return;
+  }
 
-    if (speed >= MIN_SPEED) {
-      if (!elapsedStart) {
-        setElapsedStart(Date.now());
-      }
-    } else {
-      if (elapsedStart) {
-        setPausedElapsed(
-          (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
-        );
-        setElapsedStart(null);
-      }
+  if (speed > 3) {
+    // Jeśli prędkość wyższa niż 3 i timer nie działa, startuj pomiar czasu
+    if (!elapsedStart) {
+      setElapsedStart(Date.now());
     }
-  }, [speed, isTracking, elapsedStart]);
+  } else if (speed === 0) {
+    // Jeśli prędkość jest zero, zatrzymaj timer (pauza)
+    if (elapsedStart) {
+      setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
+      setElapsedStart(null);
+    }
+  }
+  // Prędkości w zakresie 0 < speed <= 3 nie zatrzymują i nie uruchamiają timera - timer działa tak jak wcześniej
+}, [speed, isTracking, elapsedStart]);
 
   useEffect(() => {
     if (!elapsedStart) return;
@@ -495,11 +514,13 @@ const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const performMapMatching = async () => {
     if (isMatchingRef.current) return; // Nie zaczynaj jeśli trwa inne wywołanie
     isMatchingRef.current = true;
+    setIsMapMatchingActive(true);  // informujemy że map matching działa
     try {
       const matched = await fetchMatchedRoute(track);
       setTrack((prevTrack) => matched.length ? matched : prevTrack);
     } finally {
       isMatchingRef.current = false;
+      setIsMapMatchingActive(false);  // zakończono map matching
     }
   };
 
@@ -670,6 +691,10 @@ const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
           />
           <GpsError error={gpsError} />
           <GpsAccuracyDisplay accuracy={gpsAccuracy} />
+          <StatusBar
+  isGpsSignalGood={isGpsSignalGood}
+  isMapMatchingActive={isMapMatchingActive}
+/>
           <StatsPanel
             speed={speed}
             distance={distance}
