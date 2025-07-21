@@ -68,7 +68,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const previousPositionRef = useRef<UserPosition | null>(null);
   const previousTimestampRef = useRef<number | null>(null);
   const lastValidSpeedRef = useRef<number>(0); // przechowuje ostatnią dobrą prędkość
-const isMatchingRef = useRef(false);
+  const isMatchingRef = useRef(false);
   // --- Nowe stany do wykrywania utraty i odzyskania sygnału GPS ---
   // Flaga informująca, czy obecnie utracono sygnał GPS (np. dokładność ponad MAX_ACCURACY)
   const [lostSignal, setLostSignal] = useState(false);
@@ -78,17 +78,16 @@ const isMatchingRef = useRef(false);
 
   // Referencja do pierwszego punktu z dokładnym sygnałem GPS po odzyskaniu sygnału
   const firstPointAfterRecovery = useRef<UserPosition | null>(null);
-const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
 
-// Stan informujący, czy obecnie trwa proces map matchingu (map matching)
-// Przyjmuje wartość true w trakcie wykonywania map matchingu, false poza tym czasem
-const [isMapMatchingActive, setIsMapMatchingActive] = useState(false);
+  // Stan informujący, czy obecnie trwa proces map matchingu (map matching)
+  // Przyjmuje wartość true w trakcie wykonywania map matchingu, false poza tym czasem
+  const [isMapMatchingActive, setIsMapMatchingActive] = useState(false);
 
-// Stan określający, czy jakość sygnału GPS jest wystarczająco dobra
-// true oznacza dobry, stabilny sygnał (np. zgodny z wymaganym progiem dokładności)
-// false oznacza słaby lub utracony sygnał GPS
-const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
-
+  // Stan określający, czy jakość sygnału GPS jest wystarczająco dobra
+  // true oznacza dobry, stabilny sygnał (np. zgodny z wymaganym progiem dokładności)
+  // false oznacza słaby lub utracony sygnał GPS
+  const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
 
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
   useEffect(() => {
@@ -473,27 +472,29 @@ const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
 
   // --- Aktualizacja elapsedTime (liczonego tylko podczas ruchu) ---
   useEffect(() => {
-  if (!isTracking) {
-    // Gdy śledzenie jest wyłączone, resetuj stany
-    setElapsedStart(null);
-    setPausedElapsed(0);
-    return;
-  }
-
-  if (speed > 3) {
-    // Jeśli prędkość wyższa niż 3 i timer nie działa, startuj pomiar czasu
-    if (!elapsedStart) {
-      setElapsedStart(Date.now());
-    }
-  } else if (speed === 0) {
-    // Jeśli prędkość jest zero, zatrzymaj timer (pauza)
-    if (elapsedStart) {
-      setPausedElapsed((prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000));
+    if (!isTracking) {
+      // Gdy śledzenie jest wyłączone, resetuj stany
       setElapsedStart(null);
+      setPausedElapsed(0);
+      return;
     }
-  }
-  // Prędkości w zakresie 0 < speed <= 3 nie zatrzymują i nie uruchamiają timera - timer działa tak jak wcześniej
-}, [speed, isTracking, elapsedStart]);
+
+    if (speed > 3) {
+      // Jeśli prędkość wyższa niż 3 i timer nie działa, startuj pomiar czasu
+      if (!elapsedStart) {
+        setElapsedStart(Date.now());
+      }
+    } else if (speed === 0) {
+      // Jeśli prędkość jest zero, zatrzymaj timer (pauza)
+      if (elapsedStart) {
+        setPausedElapsed(
+          (prev) => prev + Math.floor((Date.now() - elapsedStart) / 1000)
+        );
+        setElapsedStart(null);
+      }
+    }
+    // Prędkości w zakresie 0 < speed <= 3 nie zatrzymują i nie uruchamiają timera - timer działa tak jak wcześniej
+  }, [speed, isTracking, elapsedStart]);
 
   useEffect(() => {
     if (!elapsedStart) return;
@@ -508,27 +509,42 @@ const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
   }, [elapsedStart, pausedElapsed]);
 
   // --- Map matching co 10 sekund na całej trasie ---
- useEffect(() => {
-  if (!isTracking || track.length < 5) return;
+  //  useEffect(() => {
+  //   if (!isTracking || track.length < 5) return;
 
-  const performMapMatching = async () => {
-    if (isMatchingRef.current) return; // Nie zaczynaj jeśli trwa inne wywołanie
+  //   const performMapMatching = async () => {
+  //     if (isMatchingRef.current) return; // Nie zaczynaj jeśli trwa inne wywołanie
+  //     isMatchingRef.current = true;
+  //     setIsMapMatchingActive(true);  // informujemy że map matching działa
+  //     try {
+  //       const matched = await fetchMatchedRoute(track);
+  //       setTrack((prevTrack) => matched.length ? matched : prevTrack);
+  //     } finally {
+  //       isMatchingRef.current = false;
+  //       setIsMapMatchingActive(false);  // zakończono map matching
+  //     }
+  //   };
+
+  //   performMapMatching(); // Raz od razu
+  //   const interval = setInterval(performMapMatching, 10000);
+
+  //   return () => clearInterval(interval);
+  // }, [isTracking, track]);
+
+  const handleRunMapMatching = async () => {
+    if (isMatchingRef.current) return; // Jeśli trwa inne wywołanie, zablokuj
+
     isMatchingRef.current = true;
-    setIsMapMatchingActive(true);  // informujemy że map matching działa
+    setIsMapMatchingActive(true);
+
     try {
       const matched = await fetchMatchedRoute(track);
-      setTrack((prevTrack) => matched.length ? matched : prevTrack);
+      setTrack((prevTrack) => (matched.length ? matched : prevTrack));
     } finally {
       isMatchingRef.current = false;
-      setIsMapMatchingActive(false);  // zakończono map matching
+      setIsMapMatchingActive(false);
     }
   };
-
-  performMapMatching(); // Raz od razu
-  const interval = setInterval(performMapMatching, 10000);
-
-  return () => clearInterval(interval);
-}, [isTracking, track]);
 
   // --- Dodawanie zdjęć ---
   const handleAddPhoto = (photo: Photo) => {
@@ -692,9 +708,9 @@ const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
           <GpsError error={gpsError} />
           <GpsAccuracyDisplay accuracy={gpsAccuracy} />
           <StatusBar
-  isGpsSignalGood={isGpsSignalGood}
-  isMapMatchingActive={isMapMatchingActive}
-/>
+            isGpsSignalGood={isGpsSignalGood}
+            isMapMatchingActive={isMapMatchingActive}
+          />
           <StatsPanel
             speed={speed}
             distance={distance}
@@ -710,6 +726,13 @@ const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
             photos={photos}
             onEditDescription={handleEditPhotoDescription}
           />
+          <button
+            onClick={handleRunMapMatching}
+            disabled={isMatchingRef.current || track.length < 5}
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
+          >
+            Uruchom map matching
+          </button>
           <button
             className="bg-green-600 text-white px-4 py-2 rounded mt-4"
             onClick={async () => {
