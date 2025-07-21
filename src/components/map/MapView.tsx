@@ -90,7 +90,7 @@ function groupPhotosByProximity(
 }
 
 // Funkcja filtrująca punkty trasy, aby usuwać odległe/skokowe punkty
-function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 200) {
+function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 1000) {
   if (track.length === 0) return [];
 
   const filtered = [track[0]];
@@ -109,7 +109,13 @@ function filterTrackPoints(track: UserPosition[], maxDistanceMeters = 200) {
   }
   return filtered;
 }
-
+// Funkcja diagnostyczna do sprawdzania poprawności trasy
+function diagnoseTrack(track: UserPosition[], filteredTrack: UserPosition[]): string | null {
+  if (!track || track.length === 0) return "Brak punktów trasy (track jest pusty)";
+  if (filteredTrack.length === 0) return "Wszystkie punkty zostały odrzucone przez filtrację (skok powyżej 1000 m)";
+  if (filteredTrack.length === 1) return "Tylko jeden punkt po filtracji (Polyline wymaga min. 2)";
+  return null; // wszystko ok
+}
 export default function MapView({
   userPosition,
   track,
@@ -118,8 +124,10 @@ export default function MapView({
 }: MapViewProps) {
   const groupedPhotos = photos ? groupPhotosByProximity(photos) : [];
   const filteredTrack = filterTrackPoints(track);
+  const diagnose = diagnoseTrack(track, filteredTrack);
 
   return (
+    <>
     <MapContainer
       center={[userPosition.lat, userPosition.lon]}
       zoom={18}
@@ -185,5 +193,11 @@ export default function MapView({
       {/* Aktualizacja pozycji użytkownika */}
       <MapUpdater position={[userPosition.lat, userPosition.lon]} autoCenter={autoCenter} />
     </MapContainer>
+    {diagnose && (
+  <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded my-2 text-sm">
+    Uwaga: {diagnose}
+  </div>
+)}
+</>
   );
 }
