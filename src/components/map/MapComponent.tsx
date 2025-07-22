@@ -88,7 +88,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   // true oznacza dobry, stabilny sygnał (np. zgodny z wymaganym progiem dokładności)
   // false oznacza słaby lub utracony sygnał GPS
   const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
-
+  const [noUpdatePosition, setNoUpdatePosition] = useState(false);
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
   useEffect(() => {
     async function loadOngoingTrack() {
@@ -454,6 +454,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             // Przy prędkości poniżej progu nie aktualizujemy pozycji i trasy
             // Jeśli chcesz, możesz tu ustawić speed na lastValidSpeedRef lub 0 — zależy od UX
             setSpeed(lastValidSpeedRef.current);
+            setNoUpdatePosition(true);
           }
         },
         (error) => {
@@ -707,6 +708,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
           />
           <GpsError error={gpsError} />
           <GpsAccuracyDisplay accuracy={gpsAccuracy} />
+          {noUpdatePosition && <p>Nie aktualizuje trasy</p>}
+
           <StatusBar
             isGpsSignalGood={isGpsSignalGood}
             isMapMatchingActive={isMapMatchingActive}
