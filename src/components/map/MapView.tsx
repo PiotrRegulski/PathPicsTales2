@@ -3,13 +3,14 @@ import {
   TileLayer,
   Marker,
   Popup,
-  Polyline,
+  
 } from "react-leaflet";
 import { Photo } from "@/components/map/types";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
 import PhotoBlobToImage from "./camera/PhotoBlobToImage";
+import RoutingMachine from "./RoutingMachine";
 
 const markerIcon: L.Icon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -126,78 +127,74 @@ export default function MapView({
   const filteredTrack = filterTrackPoints(track);
   const diagnose = diagnoseTrack(track, filteredTrack);
 
+  const showRouting = filteredTrack.length >= 2;
+
   return (
     <>
-    <MapContainer
-      center={[userPosition.lat, userPosition.lon]}
-      zoom={18}
-      className="container mx-auto h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950"
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap contributors"
-      />
-      {/* Marker aktualnej pozycji użytkownika */}
-      <Marker position={[userPosition.lat, userPosition.lon]} icon={markerIcon}>
-        <Popup>📍 Twoja aktualna lokalizacja</Popup>
-      </Marker>
-
-      {/* Linia trasy */}
-      {filteredTrack.length > 1 && (
-        <Polyline
-          positions={filteredTrack.map((pos) => [pos.lat, pos.lon])}
-          color="blue"
+      <MapContainer
+        center={[userPosition.lat, userPosition.lon]}
+        zoom={18}
+        className="container mx-auto h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950"
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
         />
-      )}
-
-      {/* Markery grup zdjęć */}
-      {groupedPhotos.map((group) => (
-        <Marker
-          key={`${group.position.lat.toFixed(6)}_${group.position.lon.toFixed(
-            6
-          )}`}
-          position={[group.position.lat, group.position.lon]}
-          icon={photoIcon}
-        >
-          <Popup>
-            {group.photos.length === 1 ? (
-              <PhotoBlobToImage
-                blob={group.photos[0].blob}
-                alt={group.photos[0].description || "Zdjęcie"}
-                width={150}
-                height={100}
-                className="rounded"
-              />
-            ) : (
-              <div className="flex flex-wrap gap-1 max-w-[300px]">
-                {group.photos.map((photo) => (
-                  <div
-                    key={photo.id}
-                    className="w-[60px] h-[60px] cursor-pointer rounded overflow-hidden"
-                  >
-                    <PhotoBlobToImage
-                      blob={photo.blob}
-                      alt={photo.description || "Zdjęcie"}
-                      width={60}
-                      height={60}
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </Popup>
+        <Marker position={[userPosition.lat, userPosition.lon]} icon={markerIcon}>
+          <Popup>📍 Twoja aktualna lokalizacja</Popup>
         </Marker>
-      ))}
 
-      {/* Aktualizacja pozycji użytkownika */}
-      <MapUpdater position={[userPosition.lat, userPosition.lon]} autoCenter={autoCenter} />
-    </MapContainer>
-    {diagnose && (
-  <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded my-2 text-sm">
-    Uwaga: {diagnose}
-  </div>
-)}
-</>
+        {/* Zamiast Polyline używamy RoutingMachine */}
+        {showRouting && <RoutingMachine waypoints={filteredTrack} />}
+
+        {groupedPhotos.map((group) => (
+          <Marker
+            key={`${group.position.lat.toFixed(6)}_${group.position.lon.toFixed(
+              6
+            )}`}
+            position={[group.position.lat, group.position.lon]}
+            icon={photoIcon}
+          >
+            <Popup>
+              {group.photos.length === 1 ? (
+                <PhotoBlobToImage
+                  blob={group.photos[0].blob}
+                  alt={group.photos[0].description || "Zdjęcie"}
+                  width={150}
+                  height={100}
+                  className="rounded"
+                />
+              ) : (
+                <div className="flex flex-wrap gap-1 max-w-[300px]">
+                  {group.photos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="w-[60px] h-[60px] cursor-pointer rounded overflow-hidden"
+                    >
+                      <PhotoBlobToImage
+                        blob={photo.blob}
+                        alt={photo.description || "Zdjęcie"}
+                        width={60}
+                        height={60}
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Popup>
+          </Marker>
+        ))}
+
+        <MapUpdater position={[userPosition.lat, userPosition.lon]} autoCenter={autoCenter} />
+      </MapContainer>
+
+      {/* Diagnostyka problemów z trasą */}
+      {diagnose && (
+        <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded my-2 text-sm">
+          Uwaga: {diagnose}
+        </div>
+      )}
+    </>
   );
 }
