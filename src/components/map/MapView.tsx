@@ -7,6 +7,7 @@ import {
 } from "react-leaflet";
 import { Photo } from "@/components/map/types";
 import "leaflet/dist/leaflet.css";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
 import PhotoBlobToImage from "./camera/PhotoBlobToImage";
@@ -133,7 +134,7 @@ export default function MapView({
     <>
       <MapContainer
         center={[userPosition.lat, userPosition.lon]}
-        zoom={18}
+        zoom={16}
         className="container mx-auto h-[25rem] w-screen rounded-lg shadow-lg border-2 border-lime-950"
       >
         <TileLayer

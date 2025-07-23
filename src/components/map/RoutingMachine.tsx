@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+
 import L from "leaflet";
 import "leaflet-routing-machine";
 
