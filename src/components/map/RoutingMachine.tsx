@@ -3,8 +3,17 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
 import L from "leaflet";
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x.src,
+  iconUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+});
 import "leaflet-routing-machine";
 
 // Typ dla propów - lista punktów, które wyznaczają trasę
