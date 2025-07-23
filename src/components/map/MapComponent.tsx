@@ -553,7 +553,15 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   };
 
   useWakeLock(isTracking);
-
+  const addTestPoint = () => {
+    const last = track[track.length - 1] || { lat: 52.2296, lon: 21.0122 };
+    const nextPoint = {
+      lat: last.lat + 0.0005,
+      lon: last.lon + 0.0005,
+    };
+    setTrack([...track, nextPoint]);
+    setUserPosition(nextPoint);
+  };
   // --- Obsługa start/pauza śledzenia ---
   const handleStartPause = async () => {
     if (isTracking) {
@@ -729,6 +737,12 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             photos={photos}
             onEditDescription={handleEditPhotoDescription}
           />
+          <button
+            onClick={addTestPoint}
+            className="my-2 px-4 py-2 bg-green-500 text-white rounded"
+          >
+            Dodaj punkt testowy
+          </button>
           <button
             onClick={handleRunMapMatching}
             disabled={isMatchingRef.current || track.length < 5}
