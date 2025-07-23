@@ -559,8 +559,10 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       lat: last.lat + 0.0005,
       lon: last.lon + 0.0005,
     };
+    const dist = getDistanceFromLatLonInMeters(last.lat, last.lon, nextPoint.lat, nextPoint.lon)
     setTrack([...track, nextPoint]);
     setUserPosition(nextPoint);
+     setDistance((prevDistance) => prevDistance + dist); // aktualizujemy dystans sumaryczny
   };
   // --- Obsługa start/pauza śledzenia ---
   const handleStartPause = async () => {

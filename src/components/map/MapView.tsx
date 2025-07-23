@@ -11,7 +11,6 @@ import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import L from "leaflet";
 import MapUpdater from "./MapUpdater";
 import PhotoBlobToImage from "./camera/PhotoBlobToImage";
-import RoutingMachine from "./RoutingMachine";
 
 const markerIcon: L.Icon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
@@ -128,7 +127,7 @@ export default function MapView({
   const filteredTrack = filterTrackPoints(track);
   const diagnose = diagnoseTrack(track, filteredTrack);
 
-  const showRouting = filteredTrack.length >= 2;
+ 
 
   return (
     <>
@@ -145,9 +144,7 @@ export default function MapView({
           <Popup>📍 Twoja aktualna lokalizacja</Popup>
         </Marker>
 
-        {/* Zamiast Polyline używamy RoutingMachine */}
-        {showRouting && <RoutingMachine waypoints={filteredTrack} />}
-
+        
         {groupedPhotos.map((group) => (
           <Marker
             key={`${group.position.lat.toFixed(6)}_${group.position.lon.toFixed(
