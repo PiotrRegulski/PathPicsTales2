@@ -2,7 +2,7 @@
 
 import useWakeLock from "@/components/map/useWakeLock";
 import ScreenLock from "@/components/map/ScreenLock";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import MapView from "./MapView";
 import ControlPanel from "./ControlPanel";
 import StatsPanel from "./StatsPanel";
@@ -68,7 +68,6 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const previousPositionRef = useRef<UserPosition | null>(null);
   const previousTimestampRef = useRef<number | null>(null);
   const lastValidSpeedRef = useRef<number>(0); // przechowuje ostatnią dobrą prędkość
-  const isMatchingRef = useRef(false);
   // --- Nowe stany do wykrywania utraty i odzyskania sygnału GPS ---
   // Flaga informująca, czy obecnie utracono sygnał GPS (np. dokładność ponad MAX_ACCURACY)
   const [lostSignal, setLostSignal] = useState(false);
@@ -82,7 +81,6 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
   // Stan informujący, czy obecnie trwa proces map matchingu (map matching)
   // Przyjmuje wartość true w trakcie wykonywania map matchingu, false poza tym czasem
-  const [isMapMatchingActive, setIsMapMatchingActive] = useState(false);
 
   // Stan określający, czy jakość sygnału GPS jest wystarczająco dobra
   // true oznacza dobry, stabilny sygnał (np. zgodny z wymaganym progiem dokładności)
@@ -90,43 +88,58 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   const [isGpsSignalGood, setIsGpsSignalGood] = useState(true);
   const [noUpdatePosition, setNoUpdatePosition] = useState(false);
   // --- Efekt do ładowania trasy z IndexedDB przy wznowieniu ---
-  useEffect(() => {
-    async function loadOngoingTrack() {
-      if (resume) {
-        try {
-          const db = await openDB("TravelDB", 2, {
-            upgrade(db) {
-              if (!db.objectStoreNames.contains("tempTracks")) {
-                db.createObjectStore("tempTracks", { keyPath: "id" });
-              }
-              if (!db.objectStoreNames.contains("tracks")) {
-                const store = db.createObjectStore("tracks", { keyPath: "id" });
-                store.createIndex("by-date", "date");
-              }
-            },
-          });
-
-          // Pobranie trasy o kluczu "ongoing" (tymczasowej)
-          const ongoing = await db.get("tempTracks", "ongoing");
-
-          if (ongoing) {
-            setTrack(ongoing.track || []);
-            setPhotos(ongoing.photos || []);
-            setDistance(ongoing.distance || 0);
-            setElapsedTime(ongoing.elapsedTime || 0);
-            setTrackName(ongoing.trackName || "");
-            setIsTracking(true);
-            setPausedTime(ongoing.travelTime || 0);
-            setStartTime(Date.now());
+  // Funkcja ładowania trasy z IndexedDB, owinięta w useCallback
+  const loadOngoingTrack = useCallback(async () => {
+    if (!resume) return;
+    try {
+      const db = await openDB("TravelDB", 2, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("tempTracks")) {
+            db.createObjectStore("tempTracks", { keyPath: "id" });
           }
-        } catch (error) {
-          console.error("Błąd podczas ładowania trasy z IndexedDB:", error);
-        }
+          if (!db.objectStoreNames.contains("tracks")) {
+            const store = db.createObjectStore("tracks", { keyPath: "id" });
+            store.createIndex("by-date", "date");
+          }
+        },
+      });
+
+      const ongoing = await db.get("tempTracks", "ongoing");
+
+      if (ongoing) {
+        setTrack(ongoing.track || []);
+        setPhotos(ongoing.photos || []);
+        setDistance(ongoing.distance || 0);
+        setElapsedTime(ongoing.elapsedTime || 0);
+        setTrackName(ongoing.trackName || "");
+        setIsTracking(true);
+        setPausedTime(ongoing.travelTime || 0);
+        setStartTime(Date.now());
       }
-      setIsLoaded(true);
+    } catch (error) {
+      console.error("Błąd podczas ładowania trasy z IndexedDB:", error);
     }
-    loadOngoingTrack();
+    setIsLoaded(true);
   }, [resume]);
+
+  // Autoładowanie przy starcie komponentu
+  useEffect(() => {
+    loadOngoingTrack();
+  }, [loadOngoingTrack]);
+
+  // Autoładowanie po powrocie do widoczności strony
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadOngoingTrack();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadOngoingTrack]);
 
   // --- Funkcja do wywołania map matchingu OSRM przez Twój API route ---
   async function fetchMatchedRoute(
@@ -532,20 +545,7 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
   //   return () => clearInterval(interval);
   // }, [isTracking, track]);
 
-  const handleRunMapMatching = async () => {
-    if (isMatchingRef.current) return; // Jeśli trwa inne wywołanie, zablokuj
 
-    isMatchingRef.current = true;
-    setIsMapMatchingActive(true);
-
-    try {
-      const matched = await fetchMatchedRoute(track);
-      setTrack((prevTrack) => (matched.length ? matched : prevTrack));
-    } finally {
-      isMatchingRef.current = false;
-      setIsMapMatchingActive(false);
-    }
-  };
 
   // --- Dodawanie zdjęć ---
   const handleAddPhoto = (photo: Photo) => {
@@ -559,10 +559,15 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
       lat: last.lat + 0.0005,
       lon: last.lon + 0.0005,
     };
-    const dist = getDistanceFromLatLonInMeters(last.lat, last.lon, nextPoint.lat, nextPoint.lon)
+    const dist = getDistanceFromLatLonInMeters(
+      last.lat,
+      last.lon,
+      nextPoint.lat,
+      nextPoint.lon
+    );
     setTrack([...track, nextPoint]);
     setUserPosition(nextPoint);
-     setDistance((prevDistance) => prevDistance + dist); // aktualizujemy dystans sumaryczny
+    setDistance((prevDistance) => prevDistance + dist); // aktualizujemy dystans sumaryczny
   };
   // --- Obsługa start/pauza śledzenia ---
   const handleStartPause = async () => {
@@ -722,7 +727,6 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
 
           <StatusBar
             isGpsSignalGood={isGpsSignalGood}
-            isMapMatchingActive={isMapMatchingActive}
           />
           <StatsPanel
             speed={speed}
@@ -746,11 +750,11 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
             Dodaj punkt testowy
           </button>
           <button
-            onClick={handleRunMapMatching}
-            disabled={isMatchingRef.current || track.length < 5}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-400"
+            onClick={loadOngoingTrack}
+            className="px-4 py-2 bg-blue-600 text-white rounded mt-2"
+            type="button"
           >
-            Uruchom map matching
+            Wczytaj trasę ręcznie
           </button>
           <button
             className="bg-green-600 text-white px-4 py-2 rounded mt-4"
