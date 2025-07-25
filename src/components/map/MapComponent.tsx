@@ -574,7 +574,8 @@ const MapComponent = ({ resume = false }: MapComponentProps) => {
     if (isTracking) {
       setIsTracking(false);
       setSpeed(0);
-
+latFilter.current = new KalmanFilter(KALMAN_PARAMS);
+    lonFilter.current = new KalmanFilter(KALMAN_PARAMS
       if (startTime) {
         setPausedTime(
           (prev) => prev + Math.floor((Date.now() - startTime) / 1000)
